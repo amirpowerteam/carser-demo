@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>خواندنی‌ها</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      .readables-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:18px}
+      .read-card{padding:14px;border-radius:10px;border:1px solid var(--card-border);background:var(--card-bg)}
+    </style>
+  </head>
+  <body class="rtl">
+    <div class="container">
+      <header class="navbar">
+        <div class="logo"><img src="/logo.svg" class="site-logo" alt="کتاب‌جیبی"></div>
+        <nav class="nav-links" style="margin-right:auto">
+          <a class="tab" href="/">خانه</a>
+          <a class="tab" href="/episodes">اپیزودها</a>
+          <a class="tab active" href="/readables">خواندنی‌ها</a>
+        </nav>
+      </header>
+
+      <main>
+        <h2 style="margin-top:18px">خواندنی‌ها</h2>
+        <p style="color:var(--muted)">مجموعه‌ای از مقالات و راهنماهای کوتاه دربارهٔ پروژه و نحوهٔ گوش دادن.</p>
+
+        <section class="readables-grid">
+          <article class="read-card">
+            <h3><a href="/readables/where-to-start.html">از کجا شروع کنیم؟</a></h3>
+            <p style="color:var(--muted)">راهنمای آغاز گوش دادن و استفادهٔ بهینه از مجموعه اپیزودها.</p>
+          </article>
+
+          <article class="read-card">
+            <h3><a href="/readables/how-ketab-jibi-is-made.html">چطور «کتاب‌جیبی» ساخته می‌شود</a></h3>
+            <p style="color:var(--muted)">معرفی روند تولید اپیزودها، ضبط و پردازش صوتی.</p>
+          </article>
+        </section>
+      </main>
+
+      <footer style="margin-top:28px;text-align:center;color:var(--dark);opacity:0.7">بازگشت به <a href="/">خانه</a></footer>
+    </div>
+    <script src="/js/pjax.js"></script>
+  </body>
+</html>

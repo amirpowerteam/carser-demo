@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>پخش‌کننده — کتاب‌جیبی</title>
+    <meta name="description" content="پخش‌کننده اپیزود پادکست کتاب‌جیبی">
+    <meta property="og:title" content="کتاب‌جیبی — پخش‌کننده">
+    <meta property="og:description" content="پخش‌کننده اپیزود پادکست کتاب‌جیبی">
+    <meta property="og:image" content="/placeholder.svg">
+    <meta property="og:type" content="music.song">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      body.player-page { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+      .player-wrap { position:relative; width:100%; height:100vh; color:#fff; }
+      .player-bg { position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(4px); }
+      .player-ui { position:relative; z-index:2; max-width:900px; margin:0 auto; padding:24px; display:flex; flex-direction:column; align-items:center; gap:18px; }
+      .player-card { background:rgba(0,0,0,0.45); padding:18px; border-radius:12px; width:100%; display:flex; align-items:center; gap:12px; }
+      .player-card .meta { flex:1; }
+      .player-controls { display:flex; gap:8px; align-items:center; }
+      .cover-upload { margin-top:8px; }
+      .player-progress { width:100%; appearance:none; height:6px; background:rgba(255,255,255,0.2); border-radius:6px; }
+    </style>
+  </head>
+  <body class="player-page">
+    <div class="container">
+      <header class="navbar">
+        <div class="platform-icons">
+          <a class="platform-link" data-tab="spotify" href="https://open.spotify.com/" title="Spotify" target="_blank" rel="noopener">🎧</a>
+          <a class="platform-link" data-tab="apple" data-action="play" href="#" title="پخش" rel="noopener">▶️</a>
+          <a class="platform-link" data-tab="youtube" href="https://www.youtube.com/" title="YouTube" target="_blank" rel="noopener">▶️</a>
+          <a class="platform-link" data-tab="telegram" href="https://t.me/" title="Telegram" target="_blank" rel="noopener">✈️</a>
+        </div>
+
+        <div class="nav-center">
+          <nav class="nav-links">
+            <a class="tab" href="/">خانه</a>
+            <a class="tab" href="/readables">خواندنی‌ها</a>
+            <a class="tab" href="/episodes">اپیزودها</a>
+            <a class="tab" href="/sponsor.html">اسپانسر شوید</a>
+            <a class="tab" href="/contact.html">تماس با ما</a>
+            <a class="tab" href="/sponsor.html">حمایت مالی</a>
+          </nav>
+          <div class="search-wrap">
+            <span style="position:relative;display:inline-flex;align-items:center;gap:8px">
+              <button id="searchIcon" class="theme-toggle" title="جستجو" style="padding:8px;border-radius:8px;margin-left:8px">🔍</button>
+              <input id="siteSearch" type="search" class="search" placeholder="جستجو...">
+            </span>
+          </div>
+        </div>
+        <div class="logo">
+          <img src="/logo.svg" alt="کتاب‌جیبی" class="site-logo">
+        </div>
+        <button id="themeToggle" class="theme-toggle" title="تغییر حالت روز/شب">🌙</button>
+      </header>
+
+      <main>
+      <div class="player-wrap">
+        <div id="playerBg" class="player-bg"></div>
+        <div class="player-ui">
+        <h2 id="title">در حال بارگذاری...</h2>
+        <img id="coverPreview" alt="cover preview" style="max-width:160px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.5);display:none;" />
+        <div class="player-card">
+          <div class="meta">
+            <div id="desc">—</div>
+            <div style="margin-top:8px">
+              <input id="seek" type="range" min="0" max="100" value="0" class="player-progress">
+            </div>
+          </div>
+          <div class="player-controls">
+            <button id="playBtn">▶</button>
+            <div id="time">00:00 / 00:00</div>
+          </div>
+        </div>
+
+        <div class="cover-upload">
+          <label>اگر می‌خواهید تصویر پس‌زمینه برای این اپیزود تنظیم کنید:</label>
+          <form id="coverForm" enctype="multipart/form-data">
+            <input type="file" name="cover" accept="image/*">
+            <input type="hidden" name="id" id="itemId">
+            <button type="submit">بارگذاری تصویر پس‌زمینه</button>
+          </form>
+          <div id="coverMsg" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <audio id="player" preload="metadata"></audio>
+    </div>
+
+    <script src="/js/player.js"></script>
+    <script>
+      function q(sel){ return document.querySelector(sel); }
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const player = (window.KJAudio && window.KJAudio.audio) || q('#player');
+      const playBtn = q('#playBtn');
+      const titleEl = q('#title');
+      const descEl = q('#desc');
+      const bg = q('#playerBg');
+      const coverPreview = q('#coverPreview');
+      const seek = q('#seek');
+      const timeEl = q('#time');
+      const coverForm = q('#coverForm');
+      const coverMsg = q('#coverMsg');
+      q('#itemId').value = id || '';
+
+      async function loadItem(){
+        if(!id){ titleEl.textContent = 'آیتم نامشخص'; return }
+        try{
+          const res = await fetch('/api/uploads');
+          const items = await res.json();
+          const it = items.find(x => String(x.id)===String(id));
+          if(!it){ titleEl.textContent = 'مورد پیدا نشد'; return }
+          titleEl.textContent = it.title || 'اپیزود';
+          descEl.textContent = it.description || (it.textContent||'');
+          // set background: prefer cover, then if mime image use file, else use a neutral gradient
+          if(it.cover){ bg.style.backgroundImage = `url('${it.cover}')`; coverPreview.src = it.cover; coverPreview.style.display = 'block'; }
+          else if(it.mime && it.mime.startsWith('image/') && it.file){ bg.style.backgroundImage = `url('${it.file}')`; coverPreview.src = it.file; coverPreview.style.display = 'block'; }
+          else { bg.style.background = 'linear-gradient(120deg,#2b2b2b,#111827)'; coverPreview.style.display = 'none'; }
+          if(it.file && it.mime && it.mime.startsWith('audio')){
+            player.src = it.file;
+          }
+          // update dynamic meta/title
+          try{
+            document.title = `${it.title || 'اپیزود'} — کتاب‌جیبی`;
+            const setMeta = (name, value, prop=false)=>{
+              const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+              let m = document.querySelector(sel);
+              if(!m){ m = document.createElement('meta'); if(prop) m.setAttribute('property', name); else m.setAttribute('name', name); document.head.appendChild(m); }
+              m.setAttribute('content', value);
+            };
+            setMeta('description', it.description || it.textContent || 'اپیزود از کتاب‌جیبی');
+            setMeta('og:title', it.title || 'کتاب‌جیبی — اپیزود', true);
+            setMeta('og:description', it.description || it.textContent || '', true);
+            setMeta('og:image', it.cover || (it.mime && it.mime.startsWith('image/') ? it.file : '/placeholder.svg'), true);
+          }catch(e){}
+        }catch(e){ console.error(e); titleEl.textContent = 'خطا در بارگزاری'; }
+      }
+
+      playBtn.addEventListener('click', ()=>{
+        if(window.KJAudio){
+          try{
+            const st = window.KJAudio.getState();
+            if(!st.src) return;
+            if(st.paused){ window.KJAudio.play().then(()=>{ playBtn.textContent='⏸'; }).catch(()=>{}); }
+            else { window.KJAudio.pause(); playBtn.textContent='▶'; }
+          }catch(e){ console.error(e); }
+          return;
+        }
+        // fallback to page-local audio element
+        if(!player.src) return;
+        if(player.paused){ player.play(); playBtn.textContent = '⏸'; }
+        else { player.pause(); playBtn.textContent = '▶'; }
+      });
+
+      // prefer KJAudio events when available
+      if(window.KJAudio && window.KJAudio.on){
+        try{
+          // initialize UI from current state
+          const s = window.KJAudio.getState(); if(s && typeof s.duration !== 'undefined') seek.max = Math.floor(s.duration);
+          window.KJAudio.on('statechange', (s)=>{ try{ seek.max = Math.floor(s.duration || 0); seek.value = Math.floor(s.time || 0); updateTime(); if(s.paused) playBtn.textContent='▶'; else playBtn.textContent='⏸'; }catch(e){} });
+        }catch(e){}
+      } else {
+        player.addEventListener('loadedmetadata', ()=>{ seek.max = Math.floor(player.duration); updateTime(); });
+        player.addEventListener('timeupdate', ()=>{ seek.value = Math.floor(player.currentTime); updateTime(); });
+      }
+
+      seek.addEventListener('input', ()=>{
+        if(window.KJAudio && typeof window.KJAudio.seek === 'function'){ try{ window.KJAudio.seek(Number(seek.value)); }catch(e){} }
+        else { player.currentTime = Number(seek.value); }
+      });
+
+      function fmt(s){ if(!isFinite(s)) return '00:00'; const m = Math.floor(s/60).toString().padStart(2,'0'); const sec = Math.floor(s%60).toString().padStart(2,'0'); return `${m}:${sec}`; }
+      function updateTime(){
+        const cur = isFinite(player.currentTime) ? player.currentTime : 0;
+        const dur = isFinite(player.duration) ? player.duration : 0;
+        const remaining = Math.max(0, Math.floor(dur - cur));
+        timeEl.textContent = `${fmt(cur)} / ${fmt(remaining)}`;
+      }
+
+      coverForm.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(coverForm);
+        try{
+          const res = await fetch('/api/attach-cover', { method:'POST', body: fd });
+          const j = await res.json();
+          if(j && j.success){ coverMsg.textContent = 'تصویر با موفقیت بارگذاری شد.'; bg.style.backgroundImage = `url('${j.cover}')`; }
+          else { coverMsg.textContent = 'خطا در بارگذاری تصویر'; }
+        }catch(err){ console.error(err); coverMsg.textContent = 'خطا در ارتباط با سرور'; }
+      });
+
+      loadItem();
+
+      // apply theme from localStorage and wire toggle on player page
+      (function(){
+        try{
+          const t = localStorage.getItem('site-theme') || 'light';
+          if(t === 'dark') document.documentElement.classList.add('dark-mode');
+          const themeToggle = document.getElementById('themeToggle');
+          if(themeToggle){ themeToggle.textContent = document.documentElement.classList.contains('dark-mode') ? '☀️' : '🌙';
+            themeToggle.addEventListener('click', ()=>{
+              const cur = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+              const next = cur === 'dark' ? 'light' : 'dark';
+              if(next === 'dark') document.documentElement.classList.add('dark-mode'); else document.documentElement.classList.remove('dark-mode');
+              themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+              localStorage.setItem('site-theme', next);
+            });
+          }
+        }catch(e){}
+      })();
+    </script>
+    </main>
+    <footer class="sponsor">
+      <div>حمایت از پادکست — همراه با لینک پرداخت</div>
+      <div style="margin-top:8px">
+        <a class="cta" href="/sponsor.html">حمایت کن</a>
+      </div>
+    </footer>
+  </div>
+  </body>
+</html>

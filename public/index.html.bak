@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="پادکست کتاب‌جیبی — خلاصه کتاب‌ها و اپیزودهای صوتی">
+  <meta property="og:title" content="پادکست کتاب جیبی">
+  <meta property="og:description" content="خلاصه کتاب‌ها به شکل صوتی؛ شنیدن و یادگیری سریع">
+  <meta property="og:image" content="/hero.svg">
+  <meta property="og:type" content="website">
+  <title>کتاب جیبی - نسخه نمونه</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <style>
+    /* Sticky footer audio player (inline override kept minimal)
+         We intentionally keep background transparent here; visual styling
+         is controlled in /styles.css so the hero overlay can be transparent. */
+    .sticky-player {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      background: transparent;
+      color: inherit;
+      border-radius: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999
+    }
+
+    .sticky-player .btn {
+      background: transparent;
+      border: 0;
+      color: inherit;
+      font-size: 18px;
+      cursor: pointer
+    }
+
+    .sticky-player .label {
+      min-width: 0
+    }
+
+    .search-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 80px;
+      z-index: 10000
+    }
+
+    .search-modal .panel {
+      background: #0f0f11;
+      color: #fff;
+      padding: 18px;
+      border-radius: 8px;
+      width: min(880px, 96%);
+      max-height: 70vh;
+      overflow: auto
+    }
+
+    .search-results .item {
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer
+    }
+  </style>
+</head>
+
+<body class="rtl">
+  <div class="container">
+    <header class="navbar">
+      <div class="platform-icons">
+        <a class="platform-link" data-tab="spotify" href="https://open.spotify.com/" title="Spotify" target="_blank"
+          rel="noopener">🎧</a>
+        <a class="platform-link" data-tab="apple" data-action="play" href="#" title="پخش" rel="noopener">▶️</a>
+        <a class="platform-link" data-tab="youtube" href="https://www.youtube.com/" title="YouTube" target="_blank"
+          rel="noopener">▶️</a>
+        <a class="platform-link" data-tab="telegram" href="https://t.me/" title="Telegram" target="_blank"
+          rel="noopener">✈️</a>
+      </div>
+
+      <div class="nav-center">
+        <nav class="nav-links">
+          <a class="tab" href="/">خانه</a>
+          <a class="tab" href="/readables">خواندنی‌ها</a>
+          <a class="tab" href="/episodes">اپیزودها</a>
+          <a class="tab" href="/sponsor.html">اسپانسر شوید</a>
+          <a class="tab" href="/contact.html">تماس با ما</a>
+          <a class="tab" href="/sponsor.html">حمایت مالی</a>
+        </nav>
+        <div class="search-wrap">
+          <span style="position:relative;display:inline-flex;align-items:center;gap:8px">
+            <button id="searchIcon" class="theme-toggle" title="جستجو"
+              style="padding:8px;border-radius:8px;margin-left:8px">🔍</button>
+            <input id="siteSearch" type="search" class="search" placeholder="جستجو...">
+          </span>
+        </div>
+      </div>
+      <div class="logo">
+        <img src="/logo.svg" alt="کتاب‌جیبی" class="site-logo">
+      </div>
+      <button id="themeToggle" class="theme-toggle" title="تغییر حالت روز/شب">🌙</button>
+    </header>
+
+    <main>
+      <section id="siteNote"
+        style="background:#fff3bf;color:#000;padding:10px;border-radius:8px;margin:12px 0;direction:rtl;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <strong>یادداشت تیم:</strong>
+          <span id="siteNoteText">این یادداشت برای یادآوری بقیهٔ کارها قرار گرفت — لطفاً امروز ادامهٔ کارها را انجام
+            دهید.</span>
+        </div>
+        <div>
+          <button id="dismissNote"
+            style="background:#222;color:#fff;border:0;padding:6px 10px;border-radius:6px;cursor:pointer">بستن</button>
+        </div>
+      </section>
+      <section class="hero">
+        <div class="hero-wrapper">
+          <div class="hero-cover" id="heroCover">
+            <img id="heroImg" alt="hero cover" />
+            <div class="hero-content">
+              <h1 id="heroTitle">در انتظار اپیزود جدید</h1>
+              <p class="summary" id="heroSummary">خلاصه کوتاه اپیزودِ جدید اینجا نمایش داده می‌شود.</p>
+              <div class="hero-controls">
+                <span class="meta" id="heroMeta">—</span>
+              </div>
+            </div>
+            <!-- thin progress bar over hero image -->
+            <div id="heroProgress" class="hero-progress" aria-hidden="true">
+              <div id="heroProgressBar" class="bar"></div>
+            </div>
+            <div id="heroTime" class="hero-time" aria-hidden="true">0:00 / 0:00</div>
+            <!-- Sticky player controls overlayed on hero (hidden until playback starts) -->
+            <div id="stickyPlayer" class="sticky-player" onclick="arguments[0].stopPropagation()">
+              <button id="spBack" class="btn" title="Previous">⏮</button>
+              <button id="spPlay" class="play" title="Play/Pause"><span class="icon">▶</span></button>
+              <button id="spFwd" class="btn" title="Next">⏭</button>
+              <button id="spStop" class="btn" title="Stop">⏹</button>
+              <div id="spLabel" class="label">—</div>
+              <select id="spSpeed" style="width:84px;border-radius:8px;padding:6px;margin-left:8px">
+                <option value="0.75">0.75</option>
+                <option value="1">1</option>
+                <option value="1.25" selected>1.25</option>
+                <option value="1.5">1.5</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="آمار سایت">
+        <div id="statEpisodes">0 اپیزود</div>
+        <div id="statListeners">0 شنونده</div>
+        <div id="statArchive">آرشیو کتابی</div>
+      </section>
+
+      <section class="filters" style="margin-top:18px">
+        <div id="categoryChips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </section>
+
+      <section class="grid" id="episodeGrid" aria-label="فهرست اپیزودها">
+        <!-- episode cards will be injected here -->
+      </section>
+
+      <section class="uploads" style="margin-top:18px">
+        <h3>آخرین آپلودها</h3>
+        <div id="uploadsList"></div>
+      </section>
+    </main>
+
+    <footer class="sponsor">
+      <div>حمایت از پادکست — همراه با لینک پرداخت</div>
+      <div style="margin-top:8px">
+        <a class="cta" href="/sponsor.html">حمایت کن</a>
+      </div>
+    </footer>
+
+
+  </div>
+  <script>
+    (function () {
+      try {
+        const note = document.getElementById('siteNote');
+        const btn = document.getElementById('dismissNote');
+        if (!note || !btn) return;
+        if (localStorage.getItem('kj_site_note_hidden') === '1') { note.style.display = 'none'; return; }
+        btn.addEventListener('click', () => { note.style.display = 'none'; localStorage.setItem('kj_site_note_hidden', '1'); });
+      } catch (e) { }
+    })();
+
+    // --- hero progress interaction (click / drag to seek) ---
+    window.setupHeroProgressSeek = function () {
+      try {
+        const container = document.getElementById('heroProgress');
+        const bar = document.getElementById('heroProgressBar');
+        if (!container || !bar) return;
+        // create handle if missing
+        if (!document.getElementById('heroProgressHandle')) {
+          const h = document.createElement('div'); h.id = 'heroProgressHandle'; h.className = 'handle'; container.appendChild(h);
+        }
+
+        let dragging = false;
+        let wasPlaying = false;
+        function getDuration() { try { if (window.KJAudio && window.KJAudio.getState) return window.KJAudio.getState().duration || audio.duration || 0; return audio.duration || 0; } catch (e) { return audio.duration || 0; } }
+        function seekToClientX(clientX) {
+          try {
+            const rect = container.getBoundingClientRect(); const x = Math.max(0, Math.min(rect.width, clientX - rect.left)); const pct = x / rect.width; const dur = getDuration(); if (!dur || dur <= 0) return; const t = pct * dur; if (window.KJAudio && window.KJAudio.seek) window.KJAudio.seek(t); else audio.currentTime = t; updateHeroProgress(Math.floor(t), dur); updateHeroTime(Math.floor(t), dur);
+          } catch (e) { }
+        }
+
+        container.addEventListener('pointerdown', (e) => {
+          try {
+            e.preventDefault();
+            container.setPointerCapture && container.setPointerCapture(e.pointerId);
+            dragging = true;
+            const kj = window.KJAudio;
+            wasPlaying = kj ? !(kj.getState().paused) : !audio.paused;
+            if (wasPlaying) { try { if (kj) kj.pause(); else window.__kj_safePause(audio); } catch (e) { } }
+            seekToClientX(e.clientX);
+          } catch (e) { }
+        });
+        container.addEventListener('pointermove', (e) => { try { if (!dragging) return; seekToClientX(e.clientX); } catch (e) { } });
+        container.addEventListener('pointerup', (e) => { try { dragging = false; container.releasePointerCapture && container.releasePointerCapture(e.pointerId); if (wasPlaying) { try { const kj = window.KJAudio; if (kj) kj.play().catch(() => { }); else if (window.KJ && typeof window.KJ.play === 'function') window.KJ.play().catch(()=>{}); else audio.play().catch(() => { }); } catch (e) { } } } catch (e) { } });
+        container.addEventListener('pointercancel', () => { dragging = false; });
+
+        // keep heroPlay icon in sync (extra safety for broken states)
+        function syncHeroPlayIcon() { try { const btn = document.getElementById('heroPlay'); if (!btn) return; const kj = window.KJAudio; const st = kj ? kj.getState() : { paused: audio.paused }; const playing = !(st && st.paused); setButtonPlaying(btn, playing); const ic = btn.querySelector && btn.querySelector('.icon'); if (ic) ic.textContent = playing ? '⏸' : '▶'; } catch (e) { } }
+        audio.addEventListener('play', syncHeroPlayIcon); audio.addEventListener('pause', syncHeroPlayIcon);
+        if (window.KJAudio && window.KJAudio.on) window.KJAudio.on('statechange', syncHeroPlayIcon);
+      } catch (e) { }
+    };
+  </script>
+
+  <script>
+    // Dev-only: clear leftover autoplay flags during local development so pages
+    // don't start playback unexpectedly. This runs only on localhost/127.0.0.1.
+    try {
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        localStorage.removeItem('kj_allow_autoplay');
+        localStorage.removeItem('__kj_allow_autoplay');
+        try { localStorage.removeItem('kj_allow_autoplay_temp'); } catch (e) { }
+        try { window.__kj_allow_autoplay = false; } catch (e) { }
+        console.debug && console.debug('dev: cleared kj_allow_autoplay flags');
+      }
+    } catch (e) { }
+  </script>
+  <script src="/js/player.js"></script>
+  <script src="/js/audio.js"></script>
+  <script src="/js/pjax.js"></script>
+  <script>
+    // Make platform icons behave like tabs (visual active state) while preserving links.
+    (function () {
+      try {
+        // Use delegated click handling so handlers survive DOM replacements (pjax)
+        document.addEventListener('click', function (ev) {
+          try {
+            const a = ev.target.closest && ev.target.closest('a.platform-link');
+            if (!a) return;
+            // If link is an action (data-action), prevent navigation and run it
+            if (a.dataset.action === 'play') {
+              ev.preventDefault();
+              // If a unified toggle exists, use it so play/pause is consistent
+              try{ if(window.KJAudio && typeof window.KJAudio.toggle === 'function'){ window.KJAudio.toggle(); return; } }catch(e){}
+              // treat this as a user gesture: allow playback briefly
+              try { window.__kj_allow_autoplay = true; setTimeout(() => { window.__kj_allow_autoplay = false; }, 2500); } catch (e) { }
+              console.debug('platform: delegated play clicked');
+              try { if (window.appendLine) appendLine('platform: delegated play clicked'); } catch (e) { }
+              // Visual active state
+              document.querySelectorAll('.platform-link').forEach(x => x.classList.remove('active'));
+              a.classList.add('active');
+              (async () => {
+                try {
+                  const res = await fetch('/api/uploads');
+                  if (!res.ok) { console.debug('platform: /api/uploads fetch failed', res.status); return; }
+                  const items = await res.json();
+                  const first = items.find(it => it && it.file);
+                  if (!first) {
+                    console.debug('platform: no upload with file found');
+                    alert('هیچ اپیزودی برای پخش پیدا نشد.');
+                    return;
+                  }
+                  if (typeof setPlayingSource === 'function') {
+                    try { setPlayingSource(first.file); console.debug('platform: invoked setPlayingSource', first.file); try { if (window.appendLine) appendLine('platform: invoked setPlayingSource ' + first.file); } catch (e) { } } catch (e) { console.warn('platform: setPlayingSource threw', e); try { if (window.appendLine) appendLine('platform: setPlayingSource threw: ' + String(e)); } catch (err) { } }
+                    try { if (typeof showStickyFor === 'function') showStickyFor(first.file, first.title || 'در حال پخش'); } catch (e) { }
+                    // After attempting to set source, verify playback state and try to resume if appropriate
+                    setTimeout(() => {
+                      try {
+                        const kj = window.KJAudio;
+                        const a = window.sharedPlayer || window.audio;
+                        if (kj && kj.getState) { const s = kj.getState(); try { if (s && s.paused) { kj.play().then(() => { console.debug('platform: triggered kj.play() after setSource'); try { if (window.appendLine) appendLine('platform: triggered kj.play() after setSource'); } catch (e) { } }).catch(() => { try { if (window.appendLine) appendLine('platform: kj.play() failed (post-set)'); } catch (e) { } }); } } catch (e) { } }
+                        else if (a) {
+                          if (a.paused) {
+                            if (window.KJ && typeof window.KJ.play === 'function') {
+                              try { window.KJ.play().then(()=>{ console.debug('platform: triggered KJ.play() after setSource'); try{ if(window.appendLine) appendLine('platform: triggered KJ.play() after setSource'); }catch(e){} }).catch(()=>{ try{ if(window.appendLine) appendLine('platform: KJ.play() failed (post-set)'); }catch(e){} }); } catch(e){ try{ a.play().then(()=>{}).catch(()=>{}); }catch(_){ } }
+                            } else {
+                              a.play().then(() => { console.debug('platform: triggered audio.play() after setSource'); try { if (window.appendLine) appendLine('platform: triggered audio.play() after setSource'); } catch (e) { } }).catch(() => { try { if (window.appendLine) appendLine('platform: audio.play() failed (post-set)'); } catch (e) { } });
+                            }
+                          }
+                        }
+                      } catch (e) { try { if (window.appendLine) appendLine('platform: post-set check error: ' + String(e)); } catch (err) { } }
+                    }, 600);
+                    // Last-resort fallback: if playback still hasn't started, force audio.src and play
+                    setTimeout(() => {
+                      try {
+                        const kj = window.KJAudio;
+                        const a = window.sharedPlayer || window.audio;
+                        let stillPaused = true;
+                        try {
+                          if (kj && kj.getState) { const s = kj.getState(); stillPaused = !!(s && s.paused); }
+                          else if (a) { stillPaused = !!a.paused; }
+                        } catch (e) { stillPaused = true; }
+                        if (stillPaused) {
+                          try {
+                            if (a) {
+                              try{ window.__kj_safePause(a); }catch(e){ a.pause && a.pause(); }
+                              a.src = first.file;
+                              a.load && a.load();
+                              try {
+                                if (window.KJ && typeof window.KJ.play === 'function') {
+                                  window.KJ.play().then(() => { try { if (window.appendLine) appendLine('platform: fallback KJ.play() succeeded'); } catch (e) { } }).catch(err => { try { if (window.appendLine) appendLine('platform: fallback KJ.play() failed: ' + String(err)); } catch (e) { } });
+                                } else {
+                                  a.play().then(() => { try { if (window.appendLine) appendLine('platform: fallback audio.play() succeeded'); } catch (e) { } }).catch(err => { try { if (window.appendLine) appendLine('platform: fallback audio.play() failed: ' + String(err)); } catch (e) { } });
+                                }
+                              } catch (err) { try { if (window.appendLine) appendLine('platform: fallback play attempted error: ' + String(err)); } catch (e) { } }
+                              try { if (window.appendLine) appendLine('platform: fallback attempted: set audio.src and play'); } catch (e) { }
+                              showStickyFor && showStickyFor(first.file, first.title || 'در حال پخش');
+                            } else {
+                              try { if (window.appendLine) appendLine('platform: fallback: no audio element available'); } catch (e) { }
+                            }
+                          } catch (err) { try { if (window.appendLine) appendLine('platform: fallback error: ' + String(err)); } catch (e) { } }
+                        } else {
+                          try { if (window.appendLine) appendLine('platform: no fallback needed; playback started'); } catch (e) { }
+                        }
+                      } catch (e) { try { if (window.appendLine) appendLine('platform: fallback outer error: ' + String(e)); } catch (err) { } }
+                    }, 1400);
+                    return;
+                  }
+                  const audioEl = window.sharedPlayer || window.audio;
+                  if (!audioEl) { console.debug('platform: no audio element available'); return; }
+                  if (!audioEl.src) { audioEl.src = first.file; }
+                  try {
+                    if (window.KJ && typeof window.KJ.play === 'function') {
+                      await window.KJ.play(); console.debug('platform: KJ.play() called');
+                    } else {
+                      await audioEl.play(); console.debug('platform: audio.play() called');
+                    }
+                    showStickyFor && showStickyFor(audioEl.src, first.title || 'در حال پخش');
+                  } catch (e) { console.warn('platform: play failed', e); }
+                } catch (e) { console.error('platform play failed', e); }
+              })();
+              return;
+            }
+            // default: mark active visually and emit event
+            document.querySelectorAll('.platform-link').forEach(x => x.classList.remove('active'));
+            a.classList.add('active');
+            const evDetail = new CustomEvent('platformtabchange', { detail: { tab: a.dataset.tab } });
+            window.dispatchEvent(evDetail);
+          } catch (e) { console.error('platform delegated handler failed', e); }
+        }, false);
+      } catch (e) { console.error('platform delegated init failed', e); }
+    })();
+  </script>
+  <script>
+    // Ensure hero sticky controls have handlers (attach on DOM ready).
+    (function () {
+      function bindStickyControls() {
+        try {
+          const audioEl = window.sharedPlayer || window.audio;
+          const spPlay = document.getElementById('spPlay');
+          const spStop = document.getElementById('spStop');
+          const spBack = document.getElementById('spBack');
+          const spFwd = document.getElementById('spFwd');
+
+          // NOTE: sticky play button handler is attached centrally elsewhere
+          // to avoid duplicate handlers; do not attach a second handler here.
+
+          if (spStop && !spStop._wj_attached) {
+            spStop.addEventListener('click', () => {
+              try { const kj = window.KJAudio; if (kj) { kj.seek(0); kj.pause(); } else if (audioEl) { audioEl.currentTime = 0; try{ window.__kj_safePause(audioEl); }catch(e){ audioEl.pause && audioEl.pause(); } } } catch (e) { }
+            }); spStop._wj_attached = true;
+          }
+
+          if (spBack && !spBack._wj_attached) {
+            spBack.addEventListener('click', () => { try { const kj = window.KJAudio; if (kj) kj.seek(Math.max(0, (kj.getState().time || 0) - 15)); else if (audioEl) audioEl.currentTime = Math.max(0, audioEl.currentTime - 15); } catch (e) { } }); spBack._wj_attached = true;
+          }
+
+          if (spFwd && !spFwd._wj_attached) {
+            spFwd.addEventListener('click', () => { try { const kj = window.KJAudio; const dur = kj ? (kj.getState().duration || 0) : (audioEl ? audioEl.duration || 0 : 0); const cur = kj ? (kj.getState().time || 0) : (audioEl ? audioEl.currentTime : 0); if (kj) kj.seek(Math.min(dur, cur + 15)); else if (audioEl) audioEl.currentTime = Math.min(dur, cur + 15); } catch (e) { } }); spFwd._wj_attached = true;
+          }
+        } catch (e) { }
+      }
+
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindStickyControls); else bindStickyControls();
+      // Also attempt to bind again after 1s in case audio controller loads later
+      setTimeout(bindStickyControls, 1000);
+    })();
+  </script>
+  <script>
+    // small nav active helper
+    (function () {
+      const links = document.querySelectorAll('.nav-links a');
+      links.forEach(a => { if (a.getAttribute('href') === location.pathname) a.classList.add('active'); });
+    })();
+
+    const apPlay = document.getElementById('ap-play');
+    // shared Audio controller to avoid DOM audio collisions
+    const audio = (function () {
+      if (window.sharedPlayer) return window.sharedPlayer;
+      if (window.KJAudio && window.KJAudio.audio) { window.sharedPlayer = window.KJAudio.audio; return window.sharedPlayer; }
+      const p = new Audio();
+      // preload full resource so the browser can buffer and start playback faster
+      p.preload = 'auto';
+      // allow cross-origin requests when streaming from /media
+      try { p.crossOrigin = 'anonymous'; } catch (e) { }
+      window.sharedPlayer = p;
+      window.sharedPlayerState = window.sharedPlayerState || { currentPlayBtn: null };
+      return p;
+    })();
+    const sharedState = window.sharedPlayerState;
+    try { if (window.setupHeroProgressSeek) window.setupHeroProgressSeek(); } catch (e) { }
+    // debug: trace seeking/seeked/loaded events on shared audio
+    try {
+      audio.addEventListener('seeking', () => { try { console.debug('index.audio.event: seeking', audio.currentTime, audio.src); } catch (e) { } });
+      audio.addEventListener('seeked', () => { try { console.debug('index.audio.event: seeked', audio.currentTime, audio.src); } catch (e) { } });
+      audio.addEventListener('loadedmetadata', () => { try { console.debug('index.audio.event: loadedmetadata', audio.duration, audio.src); } catch (e) { } });
+      audio.addEventListener('emptied', () => { try { console.debug('index.audio.event: emptied', audio.currentTime, audio.src); } catch (e) { } });
+    } catch (e) { }
+    // debug: attach listeners to observe playback events and readyState
+    try {
+      ['loadstart', 'progress', 'canplay', 'canplaythrough', 'playing', 'waiting', 'stalled', 'error'].forEach(ev => {
+        audio.addEventListener(ev, () => {
+          try { console.debug('audio.event', ev, { paused: audio.paused, readyState: audio.readyState, currentTime: audio.currentTime }); } catch (e) { }
+        });
+      });
+    } catch (e) { }
+    function updateApIcon(playing) {
+      try {
+        const ic = apPlay && apPlay.querySelector('.icon');
+        if (ic) ic.textContent = playing ? '⏸' : '▶';
+        if (apPlay) { if (playing) apPlay.classList.add('active'); else apPlay.classList.remove('active'); }
+      } catch (e) { }
+    }
+    function setButtonPlaying(btn, playing) {
+      try {
+        if (!btn) return;
+        const ic = btn.querySelector && btn.querySelector('.icon');
+        if (ic) ic.textContent = playing ? '⏸' : '▶';
+        if (playing) btn.classList.add('active'); else btn.classList.remove('active');
+      } catch (e) { }
+    }
+    function setPlayingSource(src, btn) {
+      try { console.debug('setPlayingSource called', src, btn); } catch (e) { }
+      if (!src) return;
+      // Use KJAudio API when available to ensure singleton playback
+      const kj = window.KJAudio;
+      const perform = async () => {
+        try {
+          // attempt to set source via KJAudio which performs HEAD check
+          if (kj) {
+            const ok = await kj.setSource(src);
+            if (!ok) {
+              console.warn('KJAudio setSource failed for', src);
+              if (btn) { btn.disabled = false; const ic = btn.querySelector('.icon'); if (ic) ic.textContent = '▶'; }
+              updateApIcon(false);
+              return;
+            }
+            // feedback while buffering
+            if (btn) { btn.disabled = true; const ic = btn.querySelector('.icon'); if (ic) ic.textContent = '⏳'; }
+            // temporarily allow autoplay for this call in case caller's gesture window expired
+            try { window.__kj_allow_autoplay = true; } catch (e) { }
+            const played = await kj.play().catch(() => false);
+            try { window.__kj_allow_autoplay = false; } catch (e) { }
+            if (played) { document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false)); if (btn) setButtonPlaying(btn, true); updateApIcon(true); sharedState.currentPlayBtn = btn || null; if (btn) btn.disabled = false; startHeroProgressMonitor(); }
+            else { if (btn) { btn.disabled = false; const ic = btn.querySelector('.icon'); if (ic) ic.textContent = '▶'; } updateApIcon(false); stopHeroProgressMonitor(); }
+            return;
+          }
+          // fallback: direct audio handling
+          audio.src = src;
+          try { audio.load(); } catch (e) { }
+          try {
+            if (window.KJ && typeof window.KJ.play === 'function') {
+              window.KJ.play().then(() => startHeroProgressMonitor()).catch(() => { });
+            } else {
+              audio.play().then(() => startHeroProgressMonitor()).catch(() => { });
+            }
+          } catch (e) { try { audio.play && audio.play().catch(()=>{}); } catch(_){} }
+        } catch (e) { console.error('setPlayingSource failed', e); }
+      };
+      return perform();
+    }
+
+    if (apPlay) {
+      apPlay.addEventListener('click', () => {
+        try {
+          const kj = window.KJAudio;
+          if (kj) {
+            const st = kj.getState();
+            if (!st.src) return;
+            if (st.paused) { kj.play().then(() => { updateApIcon(true); if (sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); startHeroProgressMonitor(); }).catch(e => console.warn('KJAudio play failed', e)); }
+            else { try { kj.pause(); } catch (e) { } updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false)); stopHeroProgressMonitor(); }
+          } else {
+            if (!audio.src) return;
+            if (audio.paused) {
+              try {
+                if (window.KJ && typeof window.KJ.play === 'function') {
+                  window.KJ.play().then(() => { updateApIcon(true); if (sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); startHeroProgressMonitor(); }).catch(e => console.warn('KJ.play failed', e));
+                } else {
+                  audio.play().then(() => { updateApIcon(true); if (sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); startHeroProgressMonitor(); }).catch(e => console.warn('play failed', e));
+                }
+              } catch (e) { console.warn('play attempt error', e); }
+            } else {
+              try { const kj = window.KJAudio; if(kj && typeof kj.pause === 'function') kj.pause(); else window.__kj_safePause(audio); } catch (err) { console.error('audio.pause failed', err); }
+              updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false)); stopHeroProgressMonitor();
+            }
+          }
+        } catch (e) { console.error(e); }
+      });
+    }
+    // keep icon in sync with actual audio events (covers external changes)
+    audio.addEventListener('play', () => { updateApIcon(true); startHeroProgressMonitor(); });
+    audio.addEventListener('pause', () => { try { console.debug('audio.pause event at', audio.currentTime, audio.src); } catch (e) { } updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false)); stopHeroProgressMonitor(); });
+
+    // --- Sticky player controls & persistence ---
+    // Access sticky player elements lazily to avoid errors when the script
+    // runs before the DOM nodes exist (inline script appears before markup).
+    function showStickyFor(src, label) {
+      const stickyEl = document.getElementById('stickyPlayer');
+      const spLabelEl = document.getElementById('spLabel');
+      const spSpeedEl = document.getElementById('spSpeed');
+      if (!stickyEl) return;
+      if (!src) { stickyEl.style.display = 'none'; return }
+      stickyEl.style.display = 'flex';
+      if (spLabelEl) spLabelEl.textContent = label || src.split('/').pop();
+      try { const cur = localStorage.getItem('kj_player_speed') || '1.25'; if (spSpeedEl) spSpeedEl.value = cur; audio.playbackRate = Number(cur); } catch (e) { }
+    }
+
+    const spPlayEl = document.getElementById('spPlay');
+    const spStopEl = document.getElementById('spStop');
+    const spBackEl = document.getElementById('spBack');
+    const spFwdEl = document.getElementById('spFwd');
+    const spSpeedEl = document.getElementById('spSpeed');
+
+    // Helper to kill all known audio sources
+    window.stopAllPlayback = function () {
+      try {
+        const kj = window.KJAudio;
+        // If a recent user-initiated play just happened, avoid killing the shared player
+        const recentPlay = !!window.__kj_recent_user_play || !!window.__kj_allow_autoplay;
+        if (kj && typeof kj.pause === 'function' && !recentPlay) kj.pause();
+        if (window.sharedPlayer && typeof window.sharedPlayer.pause === 'function') { try { window.__kj_safePause(window.sharedPlayer); } catch(e){ if(!recentPlay) try{ window.sharedPlayer.pause(); }catch(_){} } }
+        if (window.audio && typeof window.audio.pause === 'function' && window.audio !== window.sharedPlayer) { try { window.__kj_safePause(window.audio); } catch(e){ if(!recentPlay) try{ window.audio.pause(); }catch(_){} } }
+        // Always pause other audio elements (best-effort) but skip shared player if recentPlay
+        document.querySelectorAll('audio').forEach(a => { try { if (recentPlay && (a === window.sharedPlayer || a.id === 'player')) return; window.__kj_safePause(a); } catch (e) { } });
+      } catch (e) { console.error('stopAllPlayback error', e); }
+    };
+
+    if (spPlayEl) spPlayEl.addEventListener('click', async (e) => {
+      try {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const kj = window.KJAudio;
+        const icon = spPlayEl.querySelector('.icon') || spPlayEl;
+
+        // --- STATE DETECTION ---
+        const kjPlaying = kj && typeof kj.getState === 'function' && !kj.getState().paused;
+        const audioPlaying = (audio && !audio.paused) || (window.sharedPlayer && !window.sharedPlayer.paused);
+        const isAnyPlaying = kjPlaying || audioPlaying;
+
+        console.log('DEBUG: PlayClick. isAnyPlaying=', isAnyPlaying);
+
+        if (isAnyPlaying) {
+          // USER WANTS PAUSE
+          window.stopAllPlayback();
+          if (icon) icon.textContent = '▶';
+        } else {
+          // USER WANTS PLAY
+          // 1. First, ensure silence (kill ghosts)
+          // mark this as a user-initiated play so stopAllPlayback won't kill the shared player
+          try{ window.__kj_recent_user_play = true; setTimeout(()=>{ try{ window.__kj_recent_user_play = false; }catch(_){} }, 1200); }catch(e){}
+          window.stopAllPlayback();
+
+          // 2. Prepare Source
+          let src = (kj ? kj.getState().src : '') || audio.src;
+          try{ console.debug('spPlay: initial src=', src); }catch(e){}
+          const pageUrl = window.location.href;
+
+          if (!src || src === '' || src === pageUrl || src.endsWith(pageUrl)) {
+            const it = window._currentHeroItem || (typeof allUploads !== 'undefined' && allUploads[0]);
+            try{ console.debug('spPlay: chosen it=', it); }catch(e){}
+            if (it && it.file) {
+              window.__kj_allow_autoplay = true;
+              src = it.file;
+              try{ console.debug('spPlay: setting src to', src); }catch(e){}
+              if (kj) await kj.setSource(src); else audio.src = src;
+            } else {
+              alert('موزیکی یافت نشد');
+              return;
+            }
+          }
+
+          // 3. Play
+          window.__kj_allow_autoplay = true;
+
+          try{ console.debug('spPlay: about to play src=', src, 'kj?', !!kj); }catch(e){}
+          if (kj) {
+            kj.play().then(() => { if (icon) icon.textContent = '⏸'; })
+              .catch(err => {
+                console.error('KJ Play Fail', err);
+                if (icon) icon.textContent = '▶';
+              });
+          } else {
+            audio.play().then(() => { if (icon) icon.textContent = '⏸'; })
+              .catch(err => {
+                console.error('Audio Play Fail', err);
+                if (icon) icon.textContent = '▶';
+              });
+          }
+          // Optimistic
+          if (icon) icon.textContent = '⏸';
+        }
+      } catch (e) { console.error('spPlay click error:', e); }
+    });
+    if (spPlayEl) try{ spPlayEl._wj_attached = true; }catch(e){}
+    if (spStopEl) spStopEl.addEventListener('click', () => {
+      try {
+        const kj = window.KJAudio;
+        if (kj) { try { kj.seek(0); kj.pause(); } catch (e) { } }
+            else { try { audio.currentTime = 0; const kj = window.KJAudio; if(kj && typeof kj.pause === 'function') kj.pause(); else window.__kj_safePause(audio); } catch (e) { } }
+        document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false));
+        updateApIcon(false);
+        stopHeroProgressMonitor();
+      } catch (e) { }
+    });
+    if (spBackEl) spBackEl.addEventListener('click', () => { try { const kj = window.KJAudio; if (kj) kj.seek(Math.max(0, (kj.getState().time || 0) - 15)); else audio.currentTime = Math.max(0, audio.currentTime - 15); } catch (e) { } });
+    if (spFwdEl) spFwdEl.addEventListener('click', () => { try { const kj = window.KJAudio; const dur = kj ? (kj.getState().duration || 0) : (audio.duration || 0); const cur = kj ? (kj.getState().time || 0) : audio.currentTime; if (kj) kj.seek(Math.min(dur, cur + 15)); else audio.currentTime = Math.min(dur, audio.currentTime + 15); } catch (e) { } });
+    if (spSpeedEl) spSpeedEl.addEventListener('change', () => { try { const kj = window.KJAudio; if (kj) kj.setRate(Number(spSpeedEl.value)); else audio.playbackRate = Number(spSpeedEl.value); localStorage.setItem('kj_player_speed', spSpeedEl.value); } catch (e) { } });
+
+    // Persist player state periodically
+    setInterval(() => {
+      try {
+        if (!audio.src) return;
+        const state = { src: audio.src, time: Math.floor(audio.currentTime), paused: audio.paused, speed: audio.playbackRate };
+        localStorage.setItem('kj_player_state', JSON.stringify(state));
+      } catch (e) { }
+    }, 1000);
+
+    // Restore if present
+    try {
+      const saved = localStorage.getItem('kj_player_state');
+      if (saved) { const s = JSON.parse(saved); if (s && s.src) { audio.src = s.src; audio.currentTime = s.time || 0; audio.playbackRate = s.speed || 1; showStickyFor(s.src, 'آماده پخش'); } }
+    } catch (e) { }
+
+    // reflect play/pause in sticky button
+    audio.addEventListener('play', () => { if (typeof spPlayEl !== 'undefined' && spPlayEl) { const i = spPlayEl.querySelector('.icon') || spPlayEl; if (i.textContent !== undefined) i.textContent = '⏸'; else i.innerHTML = '⏸'; } showStickyFor(audio.src); });
+    audio.addEventListener('pause', () => { if (typeof spPlayEl !== 'undefined' && spPlayEl) { const i = spPlayEl.querySelector('.icon') || spPlayEl; if (i.textContent !== undefined) i.textContent = '▶'; else i.innerHTML = '▶'; } });
+
+    // Update setPlayingSource to reveal sticky player when starting
+    // progress monitor helpers for hero progress bar
+    let __heroProgressInterval = null;
+    function updateHeroProgress(time, duration) {
+      try {
+        const bar = document.getElementById('heroProgressBar');
+        if (!bar) return;
+        if (!duration || duration <= 0) { bar.style.width = '0%'; const h = document.getElementById('heroProgressHandle'); if (h) h.style.left = '0%'; return; }
+        const pct = Math.max(0, Math.min(100, (time / duration) * 100));
+        bar.style.width = pct + '%';
+        const h = document.getElementById('heroProgressHandle'); if (h) h.style.left = pct + '%';
+      } catch (e) { }
+    }
+
+    function formatTimeSec(s) {
+      try { s = Number(s) || 0; const mm = Math.floor(s / 60); const ss = Math.floor(s % 60).toString().padStart(2, '0'); return `${mm}:${ss}`; } catch (e) { return '0:00'; }
+    }
+
+    function updateHeroTime(time, duration) {
+      try {
+        const el = document.getElementById('heroTime'); if (!el) return;
+        if (!duration || duration <= 0) { el.textContent = formatTimeSec(time) + ' / -'; return; }
+        el.textContent = `${formatTimeSec(time)} / ${formatTimeSec(duration)}`;
+      } catch (e) { }
+    }
+    function startHeroProgressMonitor() {
+      stopHeroProgressMonitor();
+      __heroProgressInterval = setInterval(() => {
+        try {
+          if (window.KJAudio && window.KJAudio.getState) { const s = window.KJAudio.getState(); updateHeroProgress(s.time || 0, s.duration || 0); updateHeroTime(s.time || 0, s.duration || 0); if (s.paused) { /* still update position but not stop */ } }
+          else { updateHeroProgress(Math.floor(audio.currentTime || 0), audio.duration || 0); updateHeroTime(Math.floor(audio.currentTime || 0), audio.duration || 0); }
+        } catch (e) { }
+      }, 250);
+    }
+    function stopHeroProgressMonitor() { if (__heroProgressInterval) { clearInterval(__heroProgressInterval); __heroProgressInterval = null; } }
+
+
+    // Attach KJAudio listeners (if KJAudio is loaded later, keep checking)
+    (function attachKJAudioListeners() {
+      let attached = false;
+      function tryAttach() {
+        try {
+          if (attached) return;
+          const kj = window.KJAudio;
+          if (!kj || !kj.on) return;
+          attached = true;
+          // respond to state changes from the singleton audio
+          kj.on('statechange', (s) => {
+            try {
+              const playing = !(s && s.paused);
+              updateApIcon(playing);
+
+              // Specifically update sticky player button if it exists
+              if (typeof spPlayEl !== 'undefined' && spPlayEl) {
+                const i = spPlayEl.querySelector('.icon') || spPlayEl;
+                if (i) i.textContent = playing ? '⏸' : '▶';
+              } else {
+                // Fallback lookup if variable not yet bound
+                const el = document.getElementById('spPlay');
+                if (el) { const i = el.querySelector('.icon') || el; if (i) i.textContent = playing ? '⏸' : '▶'; }
+              }
+
+              document.querySelectorAll('.play-pill').forEach(p => {
+                try { const btn = p; if (!btn) return; const cur = (btn === sharedState.currentPlayBtn); if (cur) setButtonPlaying(btn, playing); else setButtonPlaying(btn, false); } catch (e) { }
+              });
+              updateHeroProgress(s.time || 0, s.duration || 0);
+              updateHeroTime(s.time || 0, s.duration || 0);
+              if (playing) startHeroProgressMonitor(); else stopHeroProgressMonitor();
+            } catch (e) { }
+          });
+          kj.on('ended', () => { try { document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false)); updateApIcon(false); stopHeroProgressMonitor(); } catch (e) { } });
+          kj.on('error', (err) => { console.warn('KJAudio error', err); stopHeroProgressMonitor(); updateApIcon(false); });
+          // prime UI with current state
+          try { const s = kj.getState(); if (s) { updateHeroProgress(s.time || 0, s.duration || 0); updateHeroTime(s.time || 0, s.duration || 0); updateApIcon(!(s.paused)); if (!(s.paused)) startHeroProgressMonitor(); } } catch (e) { }
+        } catch (e) { }
+      }
+      // try immediately and periodically for a short while
+      tryAttach();
+      const t = setInterval(() => { tryAttach(); if (attached) clearInterval(t); }, 500);
+    })();
+
+
+    // hero elements
+    const heroCover = document.getElementById('heroCover');
+    const heroImg = document.getElementById('heroImg');
+    if (heroImg) {
+      // if image fails to load, hide it and fall back to neutral background (no inner SVG frame)
+      heroImg.onerror = () => { try { heroImg.style.display = 'none'; heroImg.src = ''; heroCover.style.backgroundImage = ''; heroCover.style.backgroundColor = 'var(--muted-bg)'; } catch (e) { } };
+    }
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSummary = document.getElementById('heroSummary');
+    const heroMeta = document.getElementById('heroMeta');
+    const heroPlay = document.getElementById('heroPlay');
+
+    // allow clicking the hero cover or hero play button to start playback for the current hero item
+    try {
+      if (heroCover) {
+        heroCover.addEventListener('click', (e) => {
+          try {
+            const it = window._currentHeroItem;
+            if (!it || !it.file) return;
+            // treat as user gesture
+            try { window.__kj_allow_autoplay = true; setTimeout(() => { window.__kj_allow_autoplay = false; }, 2500); } catch (e) { }
+            if (typeof setPlayingSource === 'function') {
+              try { setPlayingSource(it.file); if (window.appendLine) appendLine('hero: invoked setPlayingSource ' + it.file); } catch (e) { if (window.appendLine) appendLine('hero: setPlayingSource threw: ' + String(e)); }
+            } else {
+              const a = window.sharedPlayer || window.audio;
+              if (a) { try { a.src = it.file; try { if (window.KJ && typeof window.KJ.play === 'function') { window.KJ.play().then(() => { if (window.appendLine) appendLine('hero: KJ.play() succeeded'); }).catch(err => { if (window.appendLine) appendLine('hero: KJ.play() failed: ' + String(err)); }); } else { a.play().then(() => { if (window.appendLine) appendLine('hero: audio.play() succeeded'); }).catch(err => { if (window.appendLine) appendLine('hero: audio.play() failed: ' + String(err)); }); } } catch (e) { try { a.play().then(()=>{}).catch(()=>{}); }catch(_){} } } catch (e) { if (window.appendLine) appendLine('hero: fallback play error: ' + String(e)); } }
+            }
+            try { showStickyFor && showStickyFor(it.file, it.title || 'در حال پخش'); } catch (e) { }
+          } catch (e) { }
+        });
+      }
+      if (heroPlay) {
+        heroPlay.addEventListener('click', (e) => {
+          try {
+            e.stopPropagation && e.stopPropagation();
+            const it = window._currentHeroItem;
+            if (!it || !it.file) return;
+            try { window.__kj_allow_autoplay = true; setTimeout(() => { window.__kj_allow_autoplay = false; }, 2500); } catch (e) { }
+            if (typeof setPlayingSource === 'function') {
+              try { setPlayingSource(it.file, heroPlay).then(() => { if (window.appendLine) appendLine('hero: setPlayingSource resolved for ' + it.file); }).catch(() => { if (window.appendLine) appendLine('hero: setPlayingSource promise rejected'); }); if (window.appendLine) appendLine('hero: invoked setPlayingSource ' + it.file); } catch (e) { if (window.appendLine) appendLine('hero: setPlayingSource threw: ' + String(e)); }
+            } else {
+              const a = window.sharedPlayer || window.audio;
+              if (a) { try { a.src = it.file; try { if (window.KJ && typeof window.KJ.play === 'function') { window.KJ.play().then(() => { if (window.appendLine) appendLine('hero: KJ.play() succeeded'); }).catch(err => { if (window.appendLine) appendLine('hero: KJ.play() failed: ' + String(err)); }); } else { a.play().then(() => { if (window.appendLine) appendLine('hero: audio.play() succeeded'); }).catch(err => { if (window.appendLine) appendLine('hero: audio.play() failed: ' + String(err)); }); } } catch (e) { try { a.play().then(()=>{}).catch(()=>{}); }catch(_){} } } catch (e) { if (window.appendLine) appendLine('hero: fallback play error: ' + String(e)); } }
+            }
+            try { showStickyFor && showStickyFor(it.file, it.title || 'در حال پخش'); } catch (e) { }
+          } catch (e) { }
+        });
+      }
+    } catch (e) { }
+
+    const statEpisodes = document.getElementById('statEpisodes');
+    const statListeners = document.getElementById('statListeners');
+
+    const categoryChips = document.getElementById('categoryChips');
+    const episodeGrid = document.getElementById('episodeGrid');
+
+    const uploadsList = document.getElementById('uploadsList');
+
+    let allUploads = [];
+    // if user manually selected a hero item (by clicking a card), lock
+    // automatic updates for a short period so polling won't override it
+    let heroUserLocked = false;
+    let heroLockTimer = null;
+
+    async function fetchUploads() {
+      try {
+        // fetch with timeout to avoid hanging the UI
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch('/api/uploads', { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error('server returned ' + res.status);
+        allUploads = await res.json();
+        renderUploads(allUploads);
+        renderEpisodeGrid(allUploads);
+        populateHero(allUploads);
+        renderStats(allUploads);
+        renderCategories(allUploads);
+      } catch (e) {
+        console.error('fetchUploads failed', e);
+        allUploads = [];
+        try { renderUploads([]); renderEpisodeGrid([]); renderStats([]); } catch (err) { }
+        // set a safe placeholder hero so page isn't empty
+        try { setHeroItem({ title: 'کتاب‌جیبی', description: 'ارتباط با سرور برقرار نشد', mime: '' }); } catch (err) { }
+        const uploadsList = document.getElementById('uploadsList');
+        if (uploadsList) uploadsList.textContent = 'خطا در بارگزاری اپیزودها — لطفاً سرور را بررسی کنید.';
+      }
+    }
+
+    function renderUploads(items) {
+      uploadsList.innerHTML = '';
+      if (!items || items.length === 0) { uploadsList.textContent = 'هیچ موردی آپلود نشده.'; return }
+      for (const it of items) {
+        const el = document.createElement('div');
+        el.className = 'upload-item';
+        const title = document.createElement('h4'); title.textContent = it.title;
+        const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${new Date(it.createdAt).toLocaleString()} ${it.originalName ? ('- ' + it.originalName) : ''}`;
+        el.appendChild(title);
+        el.appendChild(meta);
+        if (it.textContent) { const p = document.createElement('p'); p.textContent = it.textContent; el.appendChild(p); }
+        const controlsWr = document.createElement('div'); controlsWr.style.marginTop = '8px';
+        if (it.file) {
+          const playBtn = document.createElement('button');
+          playBtn.className = 'play-pill small';
+          playBtn.innerHTML = `<span class="icon">▶</span><span class="label">Play</span>`;
+          playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // detect whether current playing source matches
+            let curSrc = '';
+            try { curSrc = (window.KJAudio && window.KJAudio.getState) ? (window.KJAudio.getState().src || '') : (audio.src || ''); }
+            catch (e) { curSrc = audio.src || ''; }
+            let playingSame = false;
+            try { const curPath = curSrc ? new URL(curSrc, location.origin).pathname : ''; playingSame = (curPath === it.file); } catch (e) { playingSame = (curSrc === it.file); }
+            const kj = window.KJAudio;
+            const paused = kj ? kj.getState().paused : audio.paused;
+            if (playingSame) {
+              if (paused) {
+                if (kj) { kj.play().then(() => { updateApIcon(true); if (playBtn) setButtonPlaying(playBtn, true); startHeroProgressMonitor(); }).catch(() => { }); }
+                else { audio.play().then(() => { updateApIcon(true); if (playBtn) setButtonPlaying(playBtn, true); startHeroProgressMonitor(); }).catch(() => { }); }
+              } else {
+                  if (kj) kj.pause(); else window.__kj_safePause(audio);
+                document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false));
+                const ic = apPlay && apPlay.querySelector('.icon'); if (ic) ic.textContent = '▶';
+                stopHeroProgressMonitor();
+              }
+            } else setPlayingSource(it.file, playBtn);
+          });
+          controlsWr.appendChild(playBtn);
+          const a = document.createElement('a'); a.href = it.file; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'دانلود/مشاهده فایل';
+          try{ a.setAttribute('download', ''); }catch(e){}
+          controlsWr.appendChild(a);
+        } else if (it.textContent) {
+          const view = document.createElement('a'); view.href = `/episode.html?id=${it.id}`; view.textContent = 'مشاهدهٔ جزئیات'; controlsWr.appendChild(view);
+        }
+        // upload cover control for list view
+        // note: upload controls removed from home page (use admin page to upload/replace files)
+        el.appendChild(controlsWr);
+        uploadsList.appendChild(el);
+      }
+    }
+
+    function renderEpisodeGrid(items) {
+      episodeGrid.innerHTML = '';
+      if (!items || items.length === 0) { episodeGrid.textContent = 'هیچ اپیزودی موجود نیست.'; return }
+      for (const it of items) {
+        const card = document.createElement('article'); card.className = 'card';
+        const thumb = document.createElement('div'); thumb.className = 'thumb';
+        const coverUrl = it.cover || (it.file && it.mime && it.mime.startsWith('image/') ? it.file : '/placeholder.svg');
+        thumb.style.backgroundImage = `url('${coverUrl}')`;
+        card.appendChild(thumb);
+        const h3 = document.createElement('h3');
+        // show the admin `title` if present, otherwise fallback to `description`
+        h3.textContent = it.title || it.description || 'اپیزود';
+        card.appendChild(h3);
+        if (it.description) { const descEl = document.createElement('p'); descEl.className = 'card-desc'; descEl.textContent = it.description; card.appendChild(descEl); }
+        const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = it.mime || '';
+        card.appendChild(meta);
+        const controls = document.createElement('div'); controls.style.marginTop = '8px';
+        const playBtn = document.createElement('button'); playBtn.className = 'play-pill small'; playBtn.innerHTML = `<span class="icon">▶</span><span class="label">Play</span>`;
+        playBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          let curSrc = '';
+          try { curSrc = (window.KJAudio && window.KJAudio.getState) ? (window.KJAudio.getState().src || '') : (audio.src || ''); }
+          catch (e) { curSrc = audio.src || ''; }
+          let playingSame = false;
+          try { const curPath = curSrc ? new URL(curSrc, location.origin).pathname : ''; playingSame = (curPath === it.file); } catch (e) { playingSame = (curSrc === it.file); }
+          const kj = window.KJAudio;
+          const paused = kj ? kj.getState().paused : audio.paused;
+          if (playingSame) {
+            if (paused) {
+              if (kj) kj.play().then(() => { updateApIcon(true); if (playBtn) setButtonPlaying(playBtn, true); startHeroProgressMonitor(); }).catch(() => { });
+              else audio.play().then(() => { updateApIcon(true); if (playBtn) setButtonPlaying(playBtn, true); startHeroProgressMonitor(); }).catch(() => { });
+            } else {
+              if (kj) kj.pause(); else window.__kj_safePause(audio);
+              document.querySelectorAll('.play-pill').forEach(p => setButtonPlaying(p, false));
+              const ic = apPlay && apPlay.querySelector('.icon'); if (ic) ic.textContent = '▶';
+              stopHeroProgressMonitor();
+            }
+          } else setPlayingSource(it.file, playBtn);
+        });
+        controls.appendChild(playBtn);
+        // upload controls removed on index page; use admin UI for uploads
+        card.appendChild(controls);
+        // clicking the whole card should set this item into the hero and scroll up
+        card.addEventListener('click', (e) => {
+          // prevent any default navigation (some browsers or overlays might open links)
+          try { e.preventDefault(); e.stopPropagation(); } catch (err) { }
+          // mark as user-selected so subsequent poll updates don't immediately override
+          try { heroUserLocked = true; if (heroLockTimer) clearTimeout(heroLockTimer); heroLockTimer = setTimeout(() => { heroUserLocked = false; heroLockTimer = null; }, 60_000); } catch (e) { }
+          setHeroItem(it, { user: true });
+          try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+        });
+        episodeGrid.appendChild(card);
+      }
+    }
+
+    function populateHero(items) {
+      if (!items || items.length === 0) return;
+      // prefer the first item that has an explicit cover; otherwise fallback to the newest item
+      const it = items.find(i => i.cover) || items[0];
+      setHeroItem(it);
+    }
+
+    function setHeroItem(it, opts) {
+      if (!it) return;
+      // if user locked the hero (clicked a card recently), ignore automatic updates
+      if (heroUserLocked && !(opts && opts.user)) return;
+      // Prefer `title` for the hero heading; fall back to `description` if title missing
+      heroTitle.textContent = it.title || it.description || '';
+      // keep textContent (longer notes) or description in the summary area
+      heroSummary.textContent = it.textContent || it.description || '';
+      heroMeta.textContent = it.mime || '';
+      // prefer explicit cover; fallback to file if it's an image, otherwise placeholder
+      const coverUrl = it.cover || (it.file && it.mime && it.mime.startsWith('image/') ? it.file : '/hero.svg');
+      // set image src for reliable object-fit handling; show img and clear CSS background
+      if (heroImg) { heroImg.style.display = 'block'; heroImg.src = coverUrl; }
+      // clear any bg fallback and use image area
+      try { heroCover.style.backgroundImage = ''; heroCover.style.backgroundColor = ''; } catch (e) { }
+      // hero area no longer contains small play/stop pills; sticky player controls handle playback
+      try { window._currentHeroItem = it; } catch (e) { }
+      // If this change was initiated by a user (e.g. clicked a card), start
+      // playing the selected episode immediately and mark this as a recent
+      // user play so other global killers won't stop it.
+      try {
+        if (opts && opts.user && it.file) {
+          try { window.__kj_allow_autoplay = true; } catch (e) { }
+          try{ window.__kj_recent_user_play = true; setTimeout(()=>{ try{ window.__kj_recent_user_play = false; }catch(_){} }, 1200); }catch(e){}
+          if (typeof setPlayingSource === 'function') {
+            try { setPlayingSource(it.file, opts && opts.playBtn ? opts.playBtn : null); } catch (e) { }
+          } else {
+            const kj = window.KJAudio;
+            if (kj && typeof kj.setSource === 'function') {
+              try { kj.setSource(it.file).then(()=>{ try{ kj.play().catch(()=>{}); }catch(_){} }).catch(()=>{}); } catch(e){}
+            } else if (window.KJ && typeof window.KJ.play === 'function') {
+              try { window.KJ.setSource ? window.KJ.setSource(it.file).then(()=>window.KJ.play().catch(()=>{})).catch(()=>{}) : window.KJ.play().catch(()=>{}); } catch(e){}
+            } else {
+              const a = window.sharedPlayer || window.audio;
+              if (a) { try{ a.src = it.file; a.play().catch(()=>{}); }catch(_){} }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    function renderStats(items) {
+      statEpisodes.textContent = (items.length || 0) + ' اپیزود';
+      // listeners placeholder
+      statListeners.textContent = '0+ شنونده';
+    }
+
+    function renderCategories(items) {
+      const cats = new Set();
+      items.forEach(it => { if (it.description) { const m = it.description.split('•'); if (m[1]) cats.add(m[1].trim()); } });
+      categoryChips.innerHTML = '';
+      const all = document.createElement('button'); all.className = 'tab active'; all.textContent = 'همه';
+      all.addEventListener('click', () => {
+        // set active state
+        categoryChips.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        all.classList.add('active');
+        renderEpisodeGrid(allUploads);
+      });
+      categoryChips.appendChild(all);
+      cats.forEach(c => {
+        const b = document.createElement('button'); b.className = 'tab'; b.textContent = c;
+        b.addEventListener('click', () => {
+          categoryChips.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+          renderEpisodeGrid(allUploads.filter(it => (it.description || '').includes(c)));
+        });
+        categoryChips.appendChild(b);
+      });
+    }
+
+    // load existing uploads on page load
+    fetchUploads();
+    // Disable polling to prevent auto-switching of hero image
+    // setInterval(fetchUploads, 8000); 
+
+    // Listen for cross-tab notifications from admin to refresh immediately
+    window.addEventListener('storage', (e) => {
+      try {
+        if (e.key === 'kj_updates') fetchUploads();
+      } catch (err) { }
+    });
+
+    // Search binding: realtime filter by title or originalName
+    const searchEl = document.getElementById('siteSearch');
+    if (searchEl) {
+      let last = '';
+      searchEl.addEventListener('input', (e) => {
+        const q = (e.target.value || '').trim().toLowerCase();
+        if (q === last) return; last = q;
+        if (!q) return renderEpisodeGrid(allUploads);
+        const filtered = allUploads.filter(it => (it.title || '').toLowerCase().includes(q) || (it.originalName || '').toLowerCase().includes(q) || (it.description || '').toLowerCase().includes(q));
+        renderEpisodeGrid(filtered);
+      });
+    }
+
+    // --- Search modal behavior ---
+    const siteSearch = document.getElementById('siteSearch');
+    const searchModal = document.getElementById('searchModal');
+    const searchInputModal = document.getElementById('searchInputModal');
+    const searchResults = document.getElementById('searchResults');
+    const searchClose = document.getElementById('searchClose');
+
+    function openSearch(query) {
+      if (!searchModal) return;
+      searchModal.style.display = 'flex';
+      if (searchInputModal) { searchInputModal.value = query || ''; searchInputModal.focus(); }
+      performSearch(query || '');
+    }
+    function closeSearch() { if (searchModal) { searchModal.style.display = 'none'; } if (searchResults) searchResults.innerHTML = ''; }
+
+    async function performSearch(q) {
+      try {
+        const res = await fetch('/api/uploads');
+        if (!res.ok) return;
+        const items = await res.json();
+        const out = items.filter(it => (it.title || '').toLowerCase().includes(q.toLowerCase()) || (it.description || '').toLowerCase().includes(q.toLowerCase()) || (it.originalName || '').toLowerCase().includes(q.toLowerCase()));
+        if (!searchResults) return;
+        searchResults.innerHTML = '';
+        if (out.length === 0) searchResults.textContent = 'نتیجه‌ای یافت نشد.';
+        for (const it of out) {
+          const el = document.createElement('div'); el.className = 'item'; el.textContent = (it.title || it.originalName || 'اپیزود');
+          el.addEventListener('click', () => { closeSearch(); setHeroItem(it); setPlayingSource(it.file, null); });
+          searchResults.appendChild(el);
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    if (siteSearch) { siteSearch.addEventListener('keydown', (e) => { if (e.key === 'Enter') { openSearch(siteSearch.value); } }); }
+    if (searchClose) searchClose.addEventListener('click', closeSearch);
+    if (searchInputModal) searchInputModal.addEventListener('input', (e) => performSearch(e.target.value));
+
+    // --- Keyboard shortcuts ---
+    // `/` opens search when not typing; `Ctrl+K` and `Alt+/` are alternatives; `Esc` closes.
+    document.addEventListener('keydown', (e) => {
+      try {
+        const active = document.activeElement;
+        const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+        // Ctrl+K or Cmd+K
+        if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          openSearch('');
+          return;
+        }
+        // Alt+/ (alternative for browsers that capture plain '/')
+        if (e.altKey && e.key === '/') {
+          e.preventDefault();
+          openSearch('');
+          return;
+        }
+        // plain / when not typing (no modifiers)
+        if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key === '/' && !isTyping) {
+          e.preventDefault();
+          openSearch('');
+          return;
+        }
+        if (e.key === 'Escape') {
+          closeSearch();
+          if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) active.blur();
+        }
+      } catch (err) { }
+    });
+
+    // Global audio persistence: save current play src and time
+    function saveAudioState() {
+      try {
+        const state = { src: audio.src || null, time: Math.floor(audio.currentTime || 0), paused: audio.paused };
+        localStorage.setItem('kj_audio', JSON.stringify(state));
+      } catch (e) { }
+    }
+
+    function restoreAudioState() {
+      try {
+        const s = localStorage.getItem('kj_audio'); if (!s) return;
+        const st = JSON.parse(s);
+        if (st.src) {
+          audio.src = st.src;
+          audio.currentTime = st.time || 0;
+            // Only auto-play if an ephemeral allow flag has been set by a recent
+            // user gesture (window.__kj_allow_autoplay). Do NOT trust persistent
+            // localStorage flags for autoplay to avoid unexpected playback.
+            try {
+              const allow = window.__kj_allow_autoplay === true;
+              if (allow && !st.paused) { audio.play().then(() => { updateApIcon(true); }).catch(() => { }); }
+              else { /* do not auto-play; just show sticky UI */ showStickyFor(st.src, 'در حال پخش'); }
+            } catch (e) { /* fallback: do not autoplay */ showStickyFor(st.src, 'در حال پخش'); }
+        }
+      } catch (e) { }
+    }
+
+    // save periodically and on pause/seek
+    audio.addEventListener('pause', saveAudioState);
+    audio.addEventListener('play', saveAudioState);
+    audio.addEventListener('timeupdate', () => { if (!audio.paused && Math.floor(audio.currentTime) % 5 === 0) saveAudioState(); });
+    restoreAudioState();
+    // extra protection: attempt to pause shortly after load to prevent unexpected autoplay
+    // but skip this auto-pause if a recent user-initiated play is in progress (flag set by player code)
+    setTimeout(() => { try { const skip = (window.__kj_allow_autoplay === true) || (window.__kj_recent_user_play === true); if (audio && !audio.paused && !skip) { const kj = window.KJAudio; if(kj && typeof kj.pause === 'function') kj.pause(); else window.__kj_safePause(audio); try { if (window.appendLine) appendLine('auto-pause applied on load to prevent autoplay'); } catch (e) { } } } catch (e) { } }, 300);
+    // keep UI in sync when audio stops/pauses — reset icons and re-enable any disabled play buttons
+    audio.addEventListener('pause', () => {
+      try { console.debug('audio.pause persistence handler at', audio.currentTime, audio.src); } catch (e) { }
+      document.querySelectorAll('.play-pill').forEach(p => {
+        try { setButtonPlaying(p, false); p.disabled = false; } catch (e) { }
+      });
+      const ic = apPlay && apPlay.querySelector('.icon'); if (ic) ic.textContent = '▶';
+    });
+    audio.addEventListener('ended', (e) => {
+      try { e.stopPropagation(); e.preventDefault(); } catch (err) { }
+      document.querySelectorAll('.play-pill').forEach(p => {
+        try { setButtonPlaying(p, false); p.disabled = false; } catch (e) { }
+      });
+      const ic = apPlay && apPlay.querySelector('.icon'); if (ic) ic.textContent = '▶';
+      // Force icon update on sticky player too
+      if (typeof spPlayEl !== 'undefined' && spPlayEl) {
+        const i = spPlayEl.querySelector('.icon') || spPlayEl;
+        if (i) i.textContent = '▶';
+      }
+      stopHeroProgressMonitor();
+      // Do NOT reload or navigate
+    });
+    // apply site theme from localStorage (if set)
+    (function () {
+      try {
+        const t = localStorage.getItem('site-theme') || 'light';
+        if (t === 'dark') document.documentElement.classList.add('dark-mode');
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+          themeToggle.textContent = document.documentElement.classList.contains('dark-mode') ? '☀️' : '🌙';
+          themeToggle.addEventListener('click', () => {
+            const cur = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+            const next = cur === 'dark' ? 'light' : 'dark';
+            if (next === 'dark') document.documentElement.classList.add('dark-mode'); else document.documentElement.classList.remove('dark-mode');
+            themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('site-theme', next);
+          });
+        }
+      } catch (e) { }
+    })();
+  </script>
+
+  <!-- sticky player moved into hero-cover -->
+
+  <!-- Search modal -->
+  <div id="searchModal" class="search-modal" role="dialog" aria-modal="true">
+    <div class="panel">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input id="searchInputModal"
+          style="flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff"
+          placeholder="جستجو...">
+        <button id="searchClose" class="btn">Close ✖</button>
+      </div>
+      <div id="searchResults" class="search-results"></div>
+    </div>
+  </div>
+</body>
+
+</html>

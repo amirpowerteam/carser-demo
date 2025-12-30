@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>وظایف باقیمانده - BluePrint</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      body{font-family: Vazirmatn, Tahoma, Arial, sans-serif;background:#fff;color:#111;padding:28px}
+      .wrap{max-width:980px;margin:28px auto}
+      .box{background:#0f1720;color:#e6eef8;padding:18px;border-radius:10px;box-shadow:0 6px 20px rgba(10,10,10,0.06);position:relative}
+      pre{white-space:pre-wrap;word-break:break-word;background:transparent;border:0;color:inherit;margin:0;font-size:15px}
+      .meta{margin-bottom:12px;color:#334155}
+      .controls{display:flex;gap:8px;margin-top:12px}
+      .btn{background:#1f6feb;border:0;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+      .btn.secondary{background:#475569}
+      .help{margin-top:10px;color:#334155;font-size:13px}
+      .back{display:inline-block;margin-top:18px;color:#0b5fff;text-decoration:none}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>وظایف باقیمانده طبق BluePrint</h1>
+      <p class="meta">لیست دقیقِ کارهایی که در فایل بلوپرینت تعیین شده و هنوز پیاده‌سازی نشده‌اند. می‌توانید کل متن را با دکمهٔ "کپی" کپی کنید و به عنوان مرجع برای برنامه‌ریزی استفاده کنید.</p>
+
+      <div class="box" id="copyBox">
+      </pre>
+        <pre id="blueprintText">• پیاده‌سازی لای‌اوت کلی و سربرگ: افزودن Container راست‌به‌چپ، هدر ثابت، لینک‌های ناوبری (خانه، خواندنی‌ها، اپیزودها، اسپانسر، تماس، حمایت) و آیکون جستجو مطابق بلوپرینت
+
+      • ایجاد AudioPlayer singleton: ری‌فکتور پلیر کنونی به یک ماژول/کانتکس مشترک (مثل `useAudio`) تا پخش هنگام تغییر صفحات حفظ شود؛ اضافه‌کردن کنترل‌ها: پخش/مکث، جست‌وجو (seek)، سرعت پخش، اسکیپ ±15s
+
+      • صفحهٔ آرشیو اپیزودها: پیاده‌سازی `/episodes` با شبکهٔ کارت‌ها، فیلترها، جستجو و دکمه/اسکرول "بارگذاری بیشتر" (infinite scroll یا pagination) با استفاده از `data/uploads.json`
+
+      • صفحهٔ تک اپیزود: ایجاد قالب `episode.html?id=` شامل پوستر بزرگ، پلیر صوتی، متادیتا (نویسنده، ناشر، مترجم، روایت‌گر)، خلاصهٔ بلند و محل دیدگاه‌ها (کامنت)
+
+      • بخش خواندنی‌ها: افزودن مسیر `/readables` و دو صفحهٔ نمونه براساس بلوپرینت («از کجا شروع کنم؟»، «چطور کتاب‌جیبی ساخته می‌شود»)
+
+      • توکن‌های طراحی و تایپوگرافی: اضافه‌کردن فونت (Vazirmatn یا fallback مناسب)، متغیرهای رنگ، فاصله‌ها و رِست‌های RTL در `styles.css` برای خوانایی و سازگاری
+
+      • SEO/متا و Open Graph: افزودن تگ‌های متا و فیلدهای Open Graph برای صفحات اپیزود (Title, Description, Image) تا اشتراک‌گذاری در شبکه‌های اجتماعی درست نمایش داده شود
+      </pre>
+</pre>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="copyBtn">کپی متن</button>
+        <button class="btn secondary" id="selectBtn">انتخاب همه</button>
+      </div>
+      <div class="help">نکته: اگر می‌خواهید این موارد را در یک تسک‌لیست مدیریتی منتقل کنید، می‌توانم آن را به فرمت JSON یا Markdown آماده کنم.</div>
+
+      <a class="back" href="/">← بازگشت به خانه</a>
+    </div>
+
+    <script>
+      const copyBtn = document.getElementById('copyBtn');
+      const selectBtn = document.getElementById('selectBtn');
+      const textEl = document.getElementById('blueprintText');
+
+      selectBtn.addEventListener('click', ()=>{
+        try{
+          const range = document.createRange();
+          range.selectNodeContents(textEl);
+          const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        }catch(e){ console.error(e); }
+      });
+
+      copyBtn.addEventListener('click', async ()=>{
+        try{
+          const text = textEl.innerText;
+          if(navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(text); alert('متن کپی شد'); return; }
+          // fallback
+          const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); alert('متن کپی شد');
+        }catch(e){ console.error(e); alert('کپی انجام نشد'); }
+      });
+    </script>
+  </body>
+</html>

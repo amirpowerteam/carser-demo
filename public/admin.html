@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>کتاب جیبی — پنل ادمین</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  </head>
+  <body>
+    <div class="container">
+      <header class="navbar">
+        <div class="platform-icons">
+          <a class="platform-link" data-tab="spotify" href="https://open.spotify.com/" title="Spotify" target="_blank" rel="noopener">🎧</a>
+          <a class="platform-link" data-tab="apple" data-action="play" href="#" title="پخش" rel="noopener">▶️</a>
+          <a class="platform-link" data-tab="youtube" href="https://www.youtube.com/" title="YouTube" target="_blank" rel="noopener">▶️</a>
+          <a class="platform-link" data-tab="telegram" href="https://t.me/" title="Telegram" target="_blank" rel="noopener">✈️</a>
+        </div>
+
+        <div class="nav-center">
+          <nav class="nav-links">
+            <a class="tab" href="/">خانه</a>
+            <a class="tab" href="/readables">خواندنی‌ها</a>
+            <a class="tab" href="/episodes">اپیزودها</a>
+            <a class="tab" href="/sponsor.html">اسپانسر شوید</a>
+            <a class="tab" href="/contact.html">تماس با ما</a>
+            <a class="tab" href="/sponsor.html">حمایت مالی</a>
+          </nav>
+          <div class="search-wrap">
+            <span style="position:relative;display:inline-flex;align-items:center;gap:8px">
+              <button id="searchIcon" class="theme-toggle" title="جستجو" style="padding:8px;border-radius:8px;margin-left:8px">🔍</button>
+              <input id="siteSearch" type="search" class="search" placeholder="جستجو...">
+            </span>
+          </div>
+        </div>
+        <div class="logo">
+          <img src="/logo.svg" alt="کتاب‌جیبی" class="site-logo">
+        </div>
+        <button id="themeToggle" class="theme-toggle" title="تغییر حالت روز/شب">🌙</button>
+      </header>
+
+      <main>
+        <section class="uploader">
+          <h2>پنل ادمین — آپلود محتوا</h2>
+
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="tabs" role="tablist" aria-label="نوع آپلود">
+                <button class="tab active" data-type="audio" role="tab" aria-selected="true">آپلود صدا</button>
+                <button class="tab" data-type="image" role="tab" aria-selected="false">آپلود تصویر</button>
+                <button class="tab" data-type="text" role="tab" aria-selected="false">افزودن متن</button>
+                <button class="tab" data-type="backup" role="tab" aria-selected="false">پشتیبان / بازیابی</button>
+              </div>
+              <button id="themeToggle" class="theme-toggle" title="تغییر حالت روز/شب">🌙</button>
+            </div>
+
+          <form id="uploadForm">
+            <input type="hidden" name="uploadType" id="uploadType" value="audio">
+            <div>
+              <label>عنوان: <input type="text" name="title"></label>
+            </div>
+            <div>
+              <label>توضیحات: <input type="text" name="description"></label>
+            </div>
+            <div id="fileRow">
+              <label id="fileLabel">فایل (صدا): <input id="fileInput" type="file" name="file" accept="audio/*"></label>
+            </div>
+            <div id="textRow">
+              <label>متن / یادداشت:</label>
+              <textarea name="textContent" id="textContent" rows="6" style="width:100%"></textarea>
+            </div>
+            <div id="backupRow" style="display:none; margin-top:12px">
+              <div>
+                <button id="backupNow" type="button">ایجاد پشتیبان (Backup Now)</button>
+              </div>
+              <div style="margin-top:8px">
+                <h4>پشتیبان‌های موجود</h4>
+                <div id="backupsList">در حال بارگذاری...</div>
+              </div>
+              <div style="margin-top:8px;color:#b00;font-size:90%">هشدار: بازیابی (Restore) محتویات پروژه را بازنویسی می‌کند.</div>
+            </div>
+            <div style="margin-top:8px">
+              <button type="submit">بارگذاری</button>
+            </div>
+          </form>
+
+          <h3>موارد آپلودشده</h3>
+          <div id="uploadsList"></div>
+        </section>
+
+        <!-- hero removed from admin UI (was static placeholder causing confusion) -->
+
+        <section class="stats">
+          <div>120+ اپیزود</div>
+          <div>10k+ شنونده</div>
+          <div>آرشیو کتابی</div>
+        </section>
+
+        <section class="grid" aria-label="فهرست اپیزودها">
+          <article class="card">
+            <div class="thumb"></div>
+          </article>
+        </section>
+      </main>
+
+      <footer class="sponsor">
+        <div>حمایت از پادکست — همراه با لینک پرداخت</div>
+        <div style="margin-top:8px">
+          <a class="cta" href="/sponsor.html">حمایت کن</a>
+        </div>
+      </footer>
+
+      
+    </div>
+
+    <script>
+      // nav active
+      (function(){
+        const links = document.querySelectorAll('.nav-links a');
+        links.forEach(a=>{ if(a.getAttribute('href')===location.pathname) a.classList.add('active'); });
+      })();
+
+      // global audio controls using a shared player
+      const apPlay = document.getElementById('ap-play');
+      const audio = (function(){
+        if(window.sharedPlayer) return window.sharedPlayer;
+        if(window.KJAudio && window.KJAudio.audio){ window.sharedPlayer = window.KJAudio.audio; return window.sharedPlayer; }
+        const p = new Audio(); p.preload = 'none';
+        try{ p.crossOrigin = 'anonymous'; }catch(e){}
+        window.sharedPlayer = p;
+        window.sharedPlayerState = window.sharedPlayerState || { currentPlayBtn: null };
+        return p;
+      })();
+      const sharedState = window.sharedPlayerState;
+      function updateApIcon(playing){
+        try{
+          const ic = apPlay && apPlay.querySelector('.icon');
+          if(ic) ic.textContent = playing ? '⏸' : '▶';
+          if(apPlay) { if(playing) apPlay.classList.add('active'); else apPlay.classList.remove('active'); }
+        }catch(e){}
+      }
+      function setButtonPlaying(btn, playing){
+        try{
+          if(!btn) return;
+          const ic = btn.querySelector && btn.querySelector('.icon');
+          if(ic) ic.textContent = playing ? '⏸' : '▶';
+          if(playing) btn.classList.add('active'); else btn.classList.remove('active');
+        }catch(e){}
+      }
+      function adminSetPlayingSource(src, btn){
+          if(!src) return;
+          // map uploads -> /media and external URLs -> /proxy to avoid CORS
+          let finalSrc = src;
+          try{
+            if (typeof src === 'string' && src.startsWith('/uploads/')) {
+              const filename = src.replace(/^\/uploads\//, '');
+              finalSrc = `/media/${encodeURIComponent(filename)}`;
+            } else if (typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://'))) {
+              try{ const u = new URL(src); if (u.origin !== location.origin) finalSrc = `/proxy?url=${encodeURIComponent(src)}`; }catch(e){}
+            }
+          }catch(e){}
+          // ensure we set the source (compare by pathname to avoid absolute vs relative mismatch)
+          try{
+            const curPath = audio.src ? new URL(audio.src, location.origin).pathname : '';
+            if(curPath !== finalSrc) audio.src = finalSrc;
+          }catch(e){
+            audio.src = finalSrc;
+          }
+          (window.KJAudio && typeof window.KJAudio.play === 'function' ? window.KJAudio.play() : audio.play()).then(()=>{
+            document.querySelectorAll('.play-pill').forEach(p=>setButtonPlaying(p, false));
+            if(btn) setButtonPlaying(btn, true);
+            updateApIcon(true);
+            sharedState.currentPlayBtn = btn || null;
+          }).catch(e=>console.warn('play failed', e));
+      }
+
+      if(apPlay){
+        apPlay.addEventListener('click', () => {
+          console.debug('admin apPlay clicked', { src: audio.src, paused: audio.paused, currentSrc: audio.currentSrc });
+          if (!audio.src) return;
+          if (audio.paused) {
+            try {
+              if (window.KJ && typeof window.KJ.play === 'function') {
+                window.KJ.play().then(()=>{ updateApIcon(true); if(sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); }).catch(e=>console.warn('KJ.play failed', e));
+              } else {
+                audio.play().then(()=>{ updateApIcon(true); if(sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); }).catch(e=>console.warn('play failed', e));
+              }
+            } catch (e) { console.warn('play attempt error', e); }
+          }
+          else {
+            try{ const kj = window.KJAudio; if(kj && typeof kj.pause === 'function') kj.pause(); else window.__kj_safePause(audio); console.debug('admin audio.pause called'); }
+            catch(err){ console.error('admin audio.pause failed', err); }
+            updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p=>setButtonPlaying(p, false));
+          }
+        });
+      }
+      audio.addEventListener('play', ()=>{ updateApIcon(true); });
+      audio.addEventListener('pause', ()=>{ updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p=>setButtonPlaying(p, false)); });
+      audio.addEventListener('ended', ()=>{ updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p=>setButtonPlaying(p, false)); });
+
+      // tabs and form handling
+      const tabs = document.querySelectorAll('.tabs .tab');
+      const uploadTypeInput = document.getElementById('uploadType');
+      const fileInput = document.getElementById('fileInput');
+      const fileLabel = document.getElementById('fileLabel');
+      const textRow = document.getElementById('textRow');
+      const backupRow = document.getElementById('backupRow');
+      const backupNowBtn = document.getElementById('backupNow');
+      const backupsListEl = document.getElementById('backupsList');
+      const fileRow = document.getElementById('fileRow');
+      const form = document.getElementById('uploadForm');
+      const uploadsList = document.getElementById('uploadsList');
+
+      function setTab(type){
+        tabs.forEach(t=>{ t.classList.toggle('active', t.dataset.type===type); t.setAttribute('aria-selected', t.dataset.type===type); });
+        uploadTypeInput.value = type;
+        if(type==='audio'){
+          fileRow.style.display = '';
+          fileInput.accept = 'audio/*';
+          fileLabel.firstChild.textContent = 'فایل (صدا): ';
+          textRow.style.display = '';
+          backupRow.style.display = 'none';
+        } else if(type==='image'){
+          fileRow.style.display = '';
+          fileInput.accept = 'image/*';
+          fileLabel.firstChild.textContent = 'فایل (تصویر): ';
+          textRow.style.display = '';
+          backupRow.style.display = 'none';
+        } else if(type==='text'){
+          fileRow.style.display = 'none';
+          textRow.style.display = '';
+          backupRow.style.display = 'none';
+        } else if(type==='backup'){
+          fileRow.style.display = 'none';
+          textRow.style.display = 'none';
+          backupRow.style.display = '';
+          // refresh backups list whenever backup tab is opened
+          try{ loadBackups(); }catch(e){}
+        }
+      }
+
+      tabs.forEach(t=> t.addEventListener('click', ()=> setTab(t.dataset.type)));
+      setTab('audio');
+
+      // Theme toggle (day/night) — persist in localStorage
+      const themeToggle = document.getElementById('themeToggle');
+      function applyTheme(mode){
+        if(mode === 'dark') document.documentElement.classList.add('dark-mode');
+        else document.documentElement.classList.remove('dark-mode');
+        themeToggle.textContent = mode === 'dark' ? '☀️' : '🌙';
+        localStorage.setItem('site-theme', mode);
+      }
+      // init
+      const saved = localStorage.getItem('site-theme') || 'light';
+      applyTheme(saved);
+      themeToggle.addEventListener('click', ()=>{
+        const cur = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+        applyTheme(cur === 'dark' ? 'light' : 'dark');
+      });
+
+      async function fetchUploads(){
+        try{
+          const res = await fetch('/api/uploads');
+          const items = await res.json();
+          renderUploads(items);
+        }catch(e){ console.error(e); }
+      }
+
+      // Backup UI logic
+      async function loadBackups(){
+        try{
+          const headers = window.__ADMIN_AUTH ? { 'Authorization': window.__ADMIN_AUTH } : {};
+          const res = await fetch('/api/backups', { headers });
+          const list = await res.json();
+          renderBackups(list);
+        }catch(e){ console.error(e); backupsListEl.textContent = 'خطا در بارگزاری پشتیبان‌ها'; }
+      }
+
+      function renderBackups(list){
+        backupsListEl.innerHTML = '';
+        if(!list || list.length===0){ backupsListEl.textContent = 'هیچ پشتیبانی وجود ندارد.'; return }
+          for(const b of list){
+          const row = document.createElement('div');
+          row.style.marginBottom = '6px';
+          const name = document.createElement('span'); name.textContent = b.name + ' ';
+          const dt = document.createElement('small'); dt.textContent = new Date(b.createdAt).toLocaleString(); dt.style.marginLeft='8px';
+          const restore = document.createElement('button'); restore.textContent = 'بازیابی'; restore.style.marginLeft='8px';
+          const download = document.createElement('a'); download.textContent = 'دانلود'; download.href = `/api/backups/${encodeURIComponent(b.name)}/download`; download.style.marginLeft = '8px'; download.setAttribute('download','');
+          restore.addEventListener('click', async ()=>{
+            if(!confirm('آیا مطمئنید که می‌خواهید این پشتیبان را بازیابی کنید؟ این عمل تمامی فایل‌های مربوطه را بازنویسی می‌کند.')) return;
+            try{
+              const headers = { 'Content-Type':'application/json' };
+              if(window.__ADMIN_AUTH) headers['Authorization'] = window.__ADMIN_AUTH;
+              const r = await fetch('/api/restore',{ method:'POST', headers, body: JSON.stringify({ name: b.name }) });
+              const j = await r.json();
+              if(j && j.success) { alert('بازیابی انجام شد. لطفاً سرور را ری‌استارت کنید اگر لازم است.'); }
+              else alert('خطا در بازیابی');
+            }catch(err){ console.error(err); alert('خطا در ارتباط با سرور'); }
+          });
+          row.appendChild(name); row.appendChild(dt); row.appendChild(restore);
+          row.appendChild(download);
+          backupsListEl.appendChild(row);
+        }
+      }
+
+      backupNowBtn.addEventListener('click', async ()=>{
+        backupNowBtn.disabled = true; backupNowBtn.textContent = 'در حال ایجاد پشتیبان...';
+        try{
+          const headers = window.__ADMIN_AUTH ? { 'Authorization': window.__ADMIN_AUTH } : {};
+          const r = await fetch('/api/backup', { method: 'POST', headers });
+          const j = await r.json();
+          if(j && j.success){ alert('پشتیبان ایجاد شد: '+j.name); loadBackups(); }
+          else alert('خطا در ایجاد پشتیبان');
+        }catch(e){ console.error(e); alert('خطا در اتصال به سرور'); }
+        backupNowBtn.disabled = false; backupNowBtn.textContent = 'ایجاد پشتیبان (Backup Now)';
+      });
+
+
+      function renderUploads(items){
+        uploadsList.innerHTML = '';
+        if(!items || items.length===0){ uploadsList.textContent = 'هیچ موردی آپلود نشده.'; return }
+        for(const it of items){
+          const el = document.createElement('div');
+          el.className = 'upload-item';
+
+          // cover (if present)
+          if(it.cover){
+            const cover = document.createElement('div');
+            cover.className = 'upload-cover';
+            try{ cover.style.backgroundImage = `url(${it.cover})`; }catch(e){ cover.style.background = '#eee'; }
+            el.appendChild(cover);
+          }
+
+          const title = document.createElement('h4'); title.textContent = it.title;
+          const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = `${new Date(it.createdAt).toLocaleString()} ${it.originalName?('- '+it.originalName):''}`;
+
+          const contentWrap = document.createElement('div');
+          contentWrap.className = 'content';
+          contentWrap.appendChild(title);
+          contentWrap.appendChild(meta);
+          if(it.textContent){ const p = document.createElement('p'); p.textContent = it.textContent; el.appendChild(p); }
+
+          const controlsWr = document.createElement('div'); controlsWr.style.marginTop = '8px';
+          if(it.file){
+            const playBtn = document.createElement('button');
+            playBtn.className = 'play-pill small';
+            playBtn.innerHTML = `<span class="icon">▶</span><span class="label">Play</span>`;
+            playBtn.addEventListener('click', ()=>{
+              // compare current audio src by pathname to avoid mismatches between
+              // absolute URLs (audio.src) and stored relative paths (it.file)
+              let playingSame = false;
+              try{
+                const curPath = audio.src ? new URL(audio.src, location.origin).pathname : '';
+                playingSame = (curPath === it.file);
+              }catch(e){
+                playingSame = (audio.src === it.file);
+              }
+              if(playingSame && !audio.paused){
+                try{ const kj = window.KJAudio; if(kj && typeof kj.pause === 'function') kj.pause(); else window.__kj_safePause(audio); }catch(e){ try{ audio.pause(); }catch(_){} }
+                document.querySelectorAll('.play-pill').forEach(p=>p.classList.remove('active'));
+                const ic = apPlay && apPlay.querySelector('.icon'); if(ic) ic.textContent = '▶';
+              } else adminSetPlayingSource(it.file, playBtn);
+            });
+            controlsWr.appendChild(playBtn);
+
+            const view = document.createElement('a'); view.href = `/episode.html?id=${it.id}`; view.textContent = 'مشاهدهٔ اپیزود'; view.style.marginLeft = '8px';
+            const a = document.createElement('a'); a.href = it.file; a.target = '_blank'; a.textContent = 'دانلود/مشاهده فایل';
+            controlsWr.appendChild(view);
+            controlsWr.appendChild(a);
+          } else if(it.textContent){
+            const view = document.createElement('a'); view.href = `/episode.html?id=${it.id}`; view.textContent = 'مشاهدهٔ جزئیات'; controlsWr.appendChild(view);
+          }
+
+          // Edit button
+          const editBtn = document.createElement('button'); editBtn.textContent = 'ویرایش'; editBtn.className='upload-btn'; editBtn.style.marginLeft='8px';
+          // Delete button
+          const delBtn = document.createElement('button'); delBtn.textContent = 'حذف'; delBtn.className='upload-btn'; delBtn.style.marginLeft='8px';
+
+          controlsWr.appendChild(editBtn);
+          controlsWr.appendChild(delBtn);
+
+          // Hidden edit form
+          const formWrap = document.createElement('div'); formWrap.style.display='none'; formWrap.style.marginTop='8px';
+          formWrap.innerHTML = `
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input type="text" class="edit-title" placeholder="عنوان" style="flex:1" />
+              <input type="text" class="edit-desc" placeholder="توضیحات" style="flex:1" />
+            </div>
+            <div style="margin-top:8px">
+              <textarea class="edit-text" rows="4" style="width:100%" placeholder="متن/یادداشت"></textarea>
+            </div>
+            <div style="margin-top:8px">
+              <label>جایگزینی فایل صوتی: <input type="file" class="replace-file" accept="audio/*" /></label>
+              <button type="button" class="upload-file-btn">بارگذاری فایل جدید</button>
+            </div>
+            <div style="margin-top:8px">
+              <label>آپلود/جایگزینی کاور: <input type="file" class="replace-cover" accept="image/*" /></label>
+              <button type="button" class="upload-cover-btn">بارگذاری کاور</button>
+            </div>
+            <div style="margin-top:8px">
+              <button type="button" class="save-edit">ذخیره</button>
+              <button type="button" class="cancel-edit" style="margin-left:8px">لغو</button>
+            </div>
+          `;
+          el.appendChild(contentWrap);
+          el.appendChild(controlsWr);
+          el.appendChild(formWrap);
+
+          // Wire edit button
+          editBtn.addEventListener('click', ()=>{
+            // populate
+            formWrap.querySelector('.edit-title').value = it.title || '';
+            formWrap.querySelector('.edit-desc').value = it.description || '';
+            formWrap.querySelector('.edit-text').value = it.textContent || '';
+            formWrap.style.display = formWrap.style.display === 'none' ? '' : 'none';
+          });
+
+          formWrap.querySelector('.cancel-edit').addEventListener('click', ()=>{ formWrap.style.display='none'; });
+
+          formWrap.querySelector('.save-edit').addEventListener('click', async ()=>{
+            const newTitle = formWrap.querySelector('.edit-title').value;
+            const newDesc = formWrap.querySelector('.edit-desc').value;
+            const newText = formWrap.querySelector('.edit-text').value;
+            try{
+              const headers = { 'Content-Type': 'application/json' };
+              if(window.__ADMIN_AUTH) headers['Authorization'] = window.__ADMIN_AUTH;
+              const r = await fetch(`/api/uploads/${it.id}`, { method: 'PUT', headers, body: JSON.stringify({ title: newTitle, description: newDesc, textContent: newText }) });
+              if(!r.ok){
+                const txt = await r.text().catch(()=>'<no body>');
+                alert('خطا در ذخیره: ' + r.status + ' - ' + txt);
+                return;
+              }
+              const j = await r.json().catch(()=>null);
+              if(j && j.success){
+                alert('ذخیره شد');
+                try{ localStorage.setItem('kj_updates', Date.now().toString()); }catch(e){}
+                fetchUploads();
+              } else alert('خطا در ذخیره');
+            }catch(e){ console.error(e); alert('خطا در ارتباط: '+(e && e.message)); }
+          });
+
+          // replace audio file handler
+          const replaceFileInput = formWrap.querySelector('.replace-file');
+          const uploadFileBtn = formWrap.querySelector('.upload-file-btn');
+          uploadFileBtn.addEventListener('click', async ()=>{
+            if(!replaceFileInput.files.length){ alert('لطفاً یک فایل صوتی انتخاب کنید'); return; }
+            try{
+              const fd = new FormData();
+              fd.append('file', replaceFileInput.files[0]);
+              const headers = window.__ADMIN_AUTH ? { 'Authorization': window.__ADMIN_AUTH } : {};
+              const r = await fetch(`/api/uploads/${it.id}/replace-file`, { method: 'POST', headers, body: fd });
+              if(!r.ok){
+                const txt = await r.text().catch(()=>'<no body>');
+                alert('خطا در جایگزینی فایل: ' + r.status + ' - ' + txt);
+                return;
+              }
+              const j = await r.json().catch(()=>null);
+              if(j && j.success){ alert('فایل صوتی با موفقیت جایگزین شد'); fetchUploads(); }
+              else alert('خطا در جایگزینی فایل');
+            }catch(e){ console.error(e); alert('خطا در اتصال: '+(e && e.message)); }
+          });
+
+          // replace/attach cover handler
+          const coverInputEl = formWrap.querySelector('.replace-cover');
+          const uploadCoverBtn = formWrap.querySelector('.upload-cover-btn');
+          uploadCoverBtn.addEventListener('click', async ()=>{
+            if(!coverInputEl.files.length){ alert('لطفاً یک تصویر انتخاب کنید'); return; }
+            try{
+              const fd = new FormData();
+              fd.append('cover', coverInputEl.files[0]);
+              fd.append('id', it.id);
+              const headers = window.__ADMIN_AUTH ? { 'Authorization': window.__ADMIN_AUTH } : {};
+              const r = await fetch('/api/attach-cover', { method: 'POST', headers, body: fd });
+              if(!r.ok){
+                const txt = await r.text().catch(()=>'<no body>');
+                alert('خطا در آپلود کاور: ' + r.status + ' - ' + txt);
+                return;
+              }
+              const j = await r.json().catch(()=>null);
+              if(j && j.success){ try{ localStorage.setItem('kj_updates', Date.now().toString()); }catch(e){} alert('کاور با موفقیت آپلود شد'); fetchUploads(); }
+              else alert('خطا در آپلود کاور');
+            }catch(e){ console.error(e); alert('خطا در اتصال: '+(e && e.message)); }
+          });
+
+          // Delete handler
+          delBtn.addEventListener('click', async ()=>{
+            if(!confirm('آیا از حذف این مورد مطمئن هستید؟')) return;
+            try{
+              const headers = {};
+              if(window.__ADMIN_AUTH) headers['Authorization'] = window.__ADMIN_AUTH;
+              const r = await fetch(`/api/uploads/${it.id}`, { method: 'DELETE', headers });
+              const j = await r.json();
+              if(j && j.success){ alert('حذف شد'); fetchUploads(); }
+              else alert('خطا در حذف');
+            }catch(e){ console.error(e); alert('خطا در ارتباط'); }
+          });
+
+          uploadsList.appendChild(el);
+        }
+      }
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(form);
+        const fileEl = document.getElementById('fileInput');
+        if(fileEl && fileEl.files.length) fd.set('file', fileEl.files[0]);
+        try{
+          const res = await fetch('/upload', { method: 'POST', body: fd });
+          const json = await res.json();
+          if(json && json.success){
+            form.reset();
+            setTab('audio');
+            try{ localStorage.setItem('kj_updates', Date.now().toString()); }catch(e){}
+            fetchUploads();
+          } else {
+            alert('خطا در آپلود');
+          }
+        }catch(err){
+          console.error(err); alert('خطا در اتصال به سرور');
+        }
+      });
+
+      // initial load
+      fetchUploads();
+      // also load backups so the tab shows current data
+      loadBackups();
+    </script>
+  </body>
+</html>

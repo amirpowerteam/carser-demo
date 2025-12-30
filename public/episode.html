@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>جزئیات اپیزود</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+      .episode-wrap{max-width:900px;margin:20px auto;padding:18px}
+      .ep-hero{display:flex;gap:18px;align-items:flex-start}
+      .ep-cover{width:260px;height:260px;border-radius:12px;background-size:cover;background-position:center}
+      .ep-meta{flex:1}
+      .ep-title{font-size:1.6rem;margin:0 0 8px}
+      .ep-desc{color:var(--dark);opacity:0.9}
+      .controls{margin-top:14px;display:flex;gap:8px;align-items:center}
+      .meta-list{margin-top:12px;color:var(--muted);font-size:0.95rem}
+      .comments{margin-top:20px;border-top:1px dashed rgba(0,0,0,0.06);padding-top:14px}
+    </style>
+  </head>
+  <body class="rtl">
+    <div class="container episode-wrap">
+    <title>جزئیات اپیزود</title>
+    <!-- SEO / Open Graph placeholders (populated by script) -->
+    <meta name="description" content="">
+    <link rel="canonical" href="">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="">
+    <meta property="og:description" content="">
+    <meta property="og:image" content="">
+    <meta property="og:url" content="">
+    <meta name="twitter:card" content="summary_large_image">
+      <div id="content">
+        <div class="ep-hero">
+          <div id="cover" class="ep-cover" style="background-image:url('/placeholder.svg')"></div>
+          <div class="ep-meta">
+            <h1 id="title" class="ep-title">در حال بارگذاری…</h1>
+            <div id="desc" class="ep-desc"></div>
+            <div class="controls">
+              <button id="play" class="play-pill"><span class="icon">▶</span> <span class="label">پخش</span></button>
+              <button id="pause" class="play-pill small">توقف</button>
+              <a id="download" class="play-pill small" href="#" target="_blank">دانلود</a>
+              <label style="margin-right:8px">سرعت:</label>
+              <select id="rate"><option>0.75</option><option>1</option><option selected>1.25</option><option>1.5</option><option>2</option></select>
+            </div>
+            <div class="meta-list" id="meta"></div>
+          </div>
+        </div>
+
+        <div class="comments">
+          <h3>دیدگاه‌ها</h3>
+          <div style="color:var(--muted);opacity:0.9">محل نگهداری دیدگاه‌ها — در آینده سیستم نظرخواهی اضافه خواهد شد.</div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/player.js"></script>
+    <script src="/js/audio.js"></script>
+    <script src="/js/pjax.js"></script>
+    <script>
+      function q(name){ return new URLSearchParams(location.search).get(name); }
+      const id = q('id');
+      async function load(){
+        if(!id){ document.getElementById('title').textContent='شناسه اپیزود مشخص نشده'; return; }
+        try{
+          const res = await fetch('/api/uploads');
+          if(!res.ok) throw new Error('failed');
+          const list = await res.json();
+          const item = findItem(list, id);
+          if(!item){ document.getElementById('title').textContent='اپیزودی با این شناسه یافت نشد'; return; }
+          populate(item);
+        }catch(e){ document.getElementById('title').textContent='خطا در بارگذاری اپیزود'; console.error(e); }
+      }
+      function findItem(list, id){
+        for(const it of list){ if(String(it.id)===String(id) || String(it.slug)===String(id)) return it; }
+        // fallback: if id is number, treat as index
+        if(/^\d+$/.test(id)){ const idx = Number(id); if(list[idx]) return list[idx]; }
+        // try match by filename
+        for(const it of list){ if(it.file && it.file.includes(id)) return it; }
+        return null;
+      }
+      function setMeta(it){
+        try{
+          const title = it.title || 'اپیزود';
+          const desc = it.description || '';
+          const url = location.href;
+          document.title = title + ' — کتاب‌جیبی';
+          document.querySelector('meta[name="description"]').setAttribute('content', desc);
+          const link = document.querySelector('link[rel="canonical"]'); if(link) link.href = url;
+          const og = (k, v)=>{ const el = document.querySelector(`meta[property="${k}"]`); if(el) el.setAttribute('content', v); };
+          og('og:title', title);
+          og('og:description', desc);
+          og('og:image', it.cover || '/placeholder.svg');
+          og('og:url', url);
+        }catch(e){ console.warn('meta set failed', e); }
+      }
+
+      function populate(it){
+        document.getElementById('title').textContent = it.title || 'اپیزود';
+        document.getElementById('desc').textContent = it.description || '';
+        document.getElementById('cover').style.backgroundImage = `url('${it.cover || '/placeholder.svg'}')`;
+        const dl = document.getElementById('download'); dl.href = it.file || '#';
+        try{ dl.setAttribute('download', ''); }catch(e){}
+        const meta = document.getElementById('meta'); meta.innerHTML = '';
+        if(it.duration) meta.innerHTML += `<div>مدت: ${it.duration}</div>`;
+        if(it.published) meta.innerHTML += `<div>تاریخ انتشار: ${it.published}</div>`;
+
+        const playBtn = document.getElementById('play');
+        const pauseBtn = document.getElementById('pause');
+        const rateSel = document.getElementById('rate');
+        playBtn.addEventListener('click', async ()=>{
+          try{
+            const kj = window.KJAudio;
+            if(kj){
+              try{ window.__kj_allow_autoplay = true; setTimeout(()=>{ try{ window.__kj_allow_autoplay = false; }catch(_){} }, 2500); }catch(_){}
+              await kj.setSource(it.file);
+              await kj.play();
+            }
+              else {
+              const kj = window.KJAudio;
+              if(kj){ try{ await kj.setSource(it.file); await kj.play(); }catch(e){} }
+              else {
+                const a = window.sharedPlayer || window.audio || new Audio(it.file);
+                try{ if(!window.sharedPlayer) window.sharedPlayer = a; }catch(e){}
+                a.src = it.file;
+                try{ if (window.KJ && typeof window.KJ.play === 'function') { window.KJ.play().catch(()=>{}); } else { a.play().catch(()=>{}); } }catch(e){ try{ a.play && a.play().catch(()=>{}); }catch(_){} }
+              }
+            }
+          }catch(e){console.error(e)}
+        });
+        pauseBtn.addEventListener('click', ()=>{ const kj = window.KJAudio; if(kj) kj.pause(); else try{ window.__kj_safePause(window.sharedPlayer || window.audio); }catch(e){} });
+        rateSel.addEventListener('change', ()=>{ const r = Number(rateSel.value); const kj = window.KJAudio; if(kj) kj.setRate(r); });
+        // set SEO meta
+        setMeta(it);
+      }
+      load();
+    </script>
+  </body>
+</html>
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>جزئیات اپیزود — کتاب‌جیبی</title>
+    <meta name="description" content="جزئیات اپیزود پادکست کتاب‌جیبی">
+    <meta property="og:title" content="کتاب‌جیبی — اپیزود">
+    <meta property="og:description" content="جزئیات اپیزود پادکست کتاب‌جیبی">
+    <meta property="og:image" content="/placeholder.svg">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <header class="navbar">
+        <div class="logo">کتاب‌جیبی</div>
+        <nav class="nav-links">
+          <a href="/">خانه</a>
+          <a href="/admin">ادمین</a>
+          <a href="/sponsor.html">حمایت</a>
+        </nav>
+        <div class="actions">🔍</div>
+        <button id="themeToggle" class="theme-toggle" title="تغییر حالت روز/شب">🌙</button>
+      </header>
+
+      <main id="content">
+        <p>در حال بارگذاری اپیزود...</p>
+      </main>
+
+      <footer class="sponsor">
+        <div>حمایت از پادکست — همراه با لینک پرداخت</div>
+      </footer>
+
+      
+    </div>
+
+    <script>
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const content = document.getElementById('content');
+      const apPlay = document.getElementById('ap-play');
+      // use shared Audio controller to avoid multiple DOM audio conflicts
+      const audio = (function(){
+        if(window.sharedPlayer) return window.sharedPlayer;
+        if(window.KJAudio && window.KJAudio.audio){ window.sharedPlayer = window.KJAudio.audio; return window.sharedPlayer; }
+        const p = new Audio(); p.preload = 'none';
+        try{ p.crossOrigin = 'anonymous'; }catch(e){}
+        window.sharedPlayer = p;
+        window.sharedPlayerState = window.sharedPlayerState || { currentPlayBtn: null };
+        return p;
+      })();
+      const sharedState = window.sharedPlayerState;
+      function updateApIcon(playing){
+        try{
+          const ic = apPlay && apPlay.querySelector('.icon');
+          if(ic) ic.textContent = playing ? '⏸' : '▶';
+          if(apPlay) { if(playing) apPlay.classList.add('active'); else apPlay.classList.remove('active'); }
+        }catch(e){}
+      }
+      function setButtonPlaying(btn, playing){
+        try{
+          if(!btn) return;
+          const ic = btn.querySelector && btn.querySelector('.icon');
+          if(ic) ic.textContent = playing ? '⏸' : '▶';
+          if(playing) btn.classList.add('active'); else btn.classList.remove('active');
+        }catch(e){}
+      }
+      const apTitle = document.getElementById('ap-title');
+      const apTimes = document.getElementById('ap-times');
+
+      if(apPlay){
+        apPlay.addEventListener('click', () => {
+          console.debug('episode apPlay clicked', { src: audio.src, paused: audio.paused, currentSrc: audio.currentSrc });
+          if (!audio.src) return;
+          if (audio.paused) {
+            try {
+              if (window.KJ && typeof window.KJ.play === 'function') {
+                window.KJ.play().then(()=>{ updateApIcon(true); if(sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); }).catch(e=>console.warn('KJ.play failed', e));
+              } else {
+                audio.play().then(()=>{ updateApIcon(true); if(sharedState.currentPlayBtn) setButtonPlaying(sharedState.currentPlayBtn, true); }).catch(e=>console.warn('play failed', e));
+              }
+            } catch (e) { console.warn('play attempt error', e); }
+          }
+          else {
+            try{ const kj = window.KJAudio; if(kj && typeof kj.pause === 'function') kj.pause(); else window.__kj_safePause(audio); console.debug('episode audio.pause called'); }
+            catch(err){ console.error('episode audio.pause failed', err); }
+            updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p=>setButtonPlaying(p, false));
+          }
+        });
+      }
+      // keep icon in sync with audio events
+      audio.addEventListener('play', ()=>{ updateApIcon(true); });
+      audio.addEventListener('pause', ()=>{ updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p=>p.classList.remove('active')); });
+      audio.addEventListener('ended', ()=>{ updateApIcon(false); document.querySelectorAll('.play-pill').forEach(p=>p.classList.remove('active')); });
+
+      async function load(){
+        if(!id){ content.innerHTML = '<p>آی‌دی اپیزود مشخص نشده.</p>'; return }
+        const res = await fetch('/api/uploads');
+        const items = await res.json();
+        const it = items.find(x=>String(x.id)===String(id));
+        if(!it){ content.innerHTML = '<p>اپیزود پیدا نشد.</p>'; return }
+
+        if(apTitle) apTitle.textContent = it.title || 'اپیزود';
+        content.innerHTML = `
+          <article class="episode-detail">
+            <div class="ep-header">
+              <div class="ep-cover">
+                <img id="epCoverImg" src="/placeholder.svg" alt="cover" />
+                <div class="cover-actions">
+                  <label class="upload-btn">آپلود عکس
+                    <input id="coverInput" type="file" accept="image/*" style="display:none">
+                  </label>
+                </div>
+              </div>
+              <div class="ep-meta">
+                <h1>${it.title}</h1>
+                <div class="meta">${new Date(it.createdAt).toLocaleString()} ${it.originalName?(' - '+it.originalName):''}</div>
+                <p class="ep-description">${it.description || ''}</p>
+              </div>
+            </div>
+            <section class="ep-body">
+              ${it.textContent ? `<div class="show-notes">${it.textContent}</div>` : ''}
+              ${it.file ? `<div><a href="${it.file}" target="_blank">دانلود/مشاهده فایل</a></div>` : ''}
+              <div class="comments"><h3>نظرات</h3><p>قسمت نظرات نمونه؛ بعداً اضافه می‌شود.</p></div>
+            </section>
+          </article>
+        `;
+
+        if(it.file){
+          audio.src = it.file;
+          function fmtSec(s){ s = Number(s)||0; const m = Math.floor(s/60).toString().padStart(2,'0'); const sec = Math.floor(s%60).toString().padStart(2,'0'); return `${m}:${sec}`; }
+          audio.addEventListener('loadedmetadata', ()=>{
+            const d = Math.floor(audio.duration||0);
+            if(apTimes) apTimes.textContent = `00:00 / ${fmtSec(d)}`;
+          });
+          audio.addEventListener('timeupdate', ()=>{
+            try{
+              if(!apTimes) return;
+              const cur = Math.floor(audio.currentTime||0);
+              const dur = isFinite(audio.duration) ? Math.floor(audio.duration||0) : 0;
+              const rem = Math.max(0, dur - cur);
+              apTimes.textContent = `${fmtSec(cur)} / ${fmtSec(rem)}`;
+            }catch(e){}
+          });
+        }
+        // set cover image if exists
+        const coverImg = document.getElementById('epCoverImg');
+        if(it.cover) coverImg.src = it.cover;
+
+        // update meta / title for SEO / social
+        try{
+          document.title = `${it.title} — کتاب‌جیبی`;
+          const setMeta = (name, value, prop=false)=>{
+            const sel = prop ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+            let m = document.querySelector(sel);
+            if(!m){ m = document.createElement('meta'); if(prop) m.setAttribute('property', name); else m.setAttribute('name', name); document.head.appendChild(m); }
+            if(prop) m.setAttribute('content', value); else m.setAttribute('content', value);
+          };
+          setMeta('description', it.description || it.textContent || 'اپیزود از کتاب‌جیبی');
+          setMeta('og:title', it.title, true);
+          setMeta('og:description', it.description || it.textContent || '', true);
+          setMeta('og:image', it.cover || (it.file && it.mime && it.mime.startsWith('image/') ? it.file : '/placeholder.svg'), true);
+        }catch(e){ }
+
+        // cover upload handler (visible button near cover)
+        const coverInput = document.getElementById('coverInput');
+        coverInput.addEventListener('change', async (e)=>{
+          const f = coverInput.files && coverInput.files[0];
+          if(!f) return;
+          const fd = new FormData();
+          fd.append('cover', f);
+          fd.append('id', it.id);
+          try{
+            const r = await fetch('/api/attach-cover', { method: 'POST', body: fd });
+            const j = await r.json();
+            if(j && j.success){
+              coverImg.src = j.cover + '?t=' + Date.now();
+              alert('کاور با موفقیت آپلود شد.');
+            } else {
+              alert('خطا در آپلود کاور');
+            }
+          }catch(err){ console.error(err); alert('خطا در اتصال به سرور'); }
+        });
+      }
+
+      load();
+
+      // apply theme from localStorage and wire toggle on episode page
+      (function(){
+        try{
+          const t = localStorage.getItem('site-theme') || 'light';
+          if(t === 'dark') document.documentElement.classList.add('dark-mode');
+          const themeToggle = document.getElementById('themeToggle');
+          if(themeToggle){ themeToggle.textContent = document.documentElement.classList.contains('dark-mode') ? '☀️' : '🌙';
+            themeToggle.addEventListener('click', ()=>{
+              const cur = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+              const next = cur === 'dark' ? 'light' : 'dark';
+              if(next === 'dark') document.documentElement.classList.add('dark-mode'); else document.documentElement.classList.remove('dark-mode');
+              themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+              localStorage.setItem('site-theme', next);
+            });
+          }
+        }catch(e){}
+      })();
+    </script>
+  </body>
+</html>

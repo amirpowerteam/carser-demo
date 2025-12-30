@@ -1,0 +1,17 @@
+Server listening on http://127.0.0.1:3000
+[media] 2025-12-28T20:35:38.491Z name=1766931359031-organfinale.mp3 status=200 range=0-209395/209396 bytes=209396ms=3ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T20:35:38.548Z name=1766931359031-organfinale.mp3 status=206 range=0-65535/209396 bytes=65536ms=3ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T20:37:35.005Z name=1766931359031-organfinale.mp3 status=206 range=0-65535/209396 bytes=65536ms=2ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T20:37:36.048Z name=1766931359031-organfinale.mp3 status=206 range=65536-131071/209396 bytes=65536ms=1ms aborted=false ip=::ffff:127.0.0.1
+Server listening on http://127.0.0.1:3000
+[media] 2025-12-28T20:47:55.668Z name=1766931359031-organfinale.mp3 status=200 range=0-209395/209396 bytes=209396ms=3ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T20:47:55.759Z name=1766931359031-organfinale.mp3 status=206 range=0-65535/209396 bytes=65536ms=1ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T20:47:56.793Z name=1766931359031-organfinale.mp3 status=206 range=65536-131071/209396 bytes=65536ms=1ms aborted=false ip=::ffff:127.0.0.1
+Server listening on http://127.0.0.1:3000
+[media] 2025-12-28T21:48:20.220Z name=1766929591786-piano2-CoolEdit.mp3 status=200 range=0-101759/101760 bytes=0ms=4000ms aborted=true ip=undefined
+[media] 2025-12-28T21:50:35.745Z name=1766931359031-organfinale.mp3 status=200 range=0-209395/209396 bytes=0ms=4002ms aborted=true ip=undefined
+Server listening on http://127.0.0.1:3000
+[media] 2025-12-28T22:10:50.669Z name=1766937457070-SpotiMate.io_-_Changes_-_2013_Remaster_-_Black_Sabbath.mp3 status=200 range=0-11496030/11496031 bytes=11496031ms=4931ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T22:11:48.391Z name=1766937457070-SpotiMate.io_-_Changes_-_2013_Remaster_-_Black_Sabbath.mp3 status=200 range=0-11496030/11496031 bytes=11496031ms=38ms aborted=false ip=::ffff:127.0.0.1
+[media] 2025-12-28T22:11:48.443Z name=1766937457070-SpotiMate.io_-_Changes_-_2013_Remaster_-_Black_Sabbath.mp3 status=206 range=0-1023/11496031 bytes=1024ms=2ms aborted=false ip=::ffff:127.0.0.1
+^C

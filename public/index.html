@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Demo Components — Ketab Jibi</title>
+    <link rel="stylesheet" href="/src/styles/globals.css">
+    <style>
+      body{padding:24px}
+      .demo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    </style>
+  </head>
+  <body>
+    <h2>Demo: EpisodeCard & Hero</h2>
+    <div id="root"></div>
+
+    <!-- React + Babel (for quick demo only) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      function EpisodeCard({id,title,description,cover,file,onPlay,onSelect}){
+        return (
+          <article className="card" tabIndex={0} onClick={()=>onSelect && onSelect(id)} onKeyDown={(e)=>{ if(e.key==='Enter') onSelect && onSelect(id); }}>
+            <div className="thumb" style={{backgroundImage:`url(${cover||'/placeholder.svg'})`,minHeight:120,backgroundSize:'cover',backgroundPosition:'center'}} aria-hidden="true"></div>
+            <h3>{title||'اپیزود'}</h3>
+            {description && <p className="card-desc">{description}</p>}
+            <div className="meta" style={{marginTop:8}}>
+              {file ? (
+                <button className="play-pill" aria-pressed="false" onClick={(e)=>{ e.stopPropagation(); onPlay && onPlay(id); }} title="پخش">
+                  <span className="icon">▶</span>
+                  <span className="label">Play</span>
+                </button>
+              ) : (<span className="muted">بدون فایل</span>)}
+            </div>
+          </article>
+        );
+      }
+
+      function Hero({id,title,summary,cover,file,meta,onPlay,onPause}){
+        const [playing,setPlaying] = useState(false);
+        useEffect(()=> setPlaying(false), [file]);
+        const handlePlay = (e)=>{ e && e.stopPropagation(); if(!file) return; if(!playing){ onPlay && onPlay(id); setPlaying(true); } else { onPause && onPause(); setPlaying(false); }};
+        return (
+          <section className="hero">
+            <div className="hero-wrapper card" style={{display:'flex',alignItems:'center',gap:24}}>
+              <div className="hero-cover" style={{width:180,height:180,flex:'0 0 180px',backgroundImage:`url(${cover||'/placeholder.svg'})`,backgroundSize:'cover',backgroundPosition:'center',borderRadius:12}}></div>
+              <div className="hero-content" style={{flex:1}}>
+                <h1 className="title">{title || 'در انتظار اپیزود جدید'}</h1>
+                <p className="summary muted">{summary || 'خلاصه کوتاه اپیزود اینجا نمایش داده می‌شود.'}</p>
+                <div style={{marginTop:12,display:'flex',gap:12,alignItems:'center'}}>
+                  <button className="btn-primary" onClick={handlePlay} aria-pressed={playing}>{playing? '⏸ Pause' : '▶ Play'}</button>
+                  <span className="meta muted">{meta||'—'}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      }
+
+      function App(){
+        const uploads = [
+          { id:1, title:'اپیزود 1 - نمونه', description:'توضیح کوتاه اپیزود', cover:'/hero.svg', file:'/uploads/448aa3742c44d4333076c6845b4697010b2c2699' },
+          { id:2, title:'اپیزود 2 - بدون فایل', description:'این مورد فایل صوتی ندارد', cover:'/placeholder.svg' }
+        ];
+        const [hero, setHero] = useState(uploads[0]);
+        const handlePlay = (id)=>{ const u = uploads.find(x=>x.id===id); if(u) setHero(u); alert('پخش: '+id); };
+        return (
+          <div>
+            <Hero {...hero} onPlay={()=>alert('Hero play')} />
+            <h3 style={{marginTop:24}}>Grid</h3>
+            <div className="demo-grid">
+              {uploads.map(u=> <EpisodeCard key={u.id} {...u} onPlay={handlePlay} onSelect={(id)=>setHero(uploads.find(x=>x.id===id))} />)}
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
